@@ -75,8 +75,8 @@
   }
   .tab{
     flex:1;border:0;background:transparent;color:var(--ink-soft);
-    font-family:inherit;font-size:14px;font-weight:700;
-    padding:10px 4px;border-radius:12px;cursor:pointer;transition:.15s;
+    font-family:inherit;font-size:13.5px;font-weight:700;letter-spacing:-.4px;
+    padding:10px 2px;border-radius:12px;cursor:pointer;transition:.15s;
     white-space:nowrap;
   }
   .tab.active{background:#fff;color:var(--ink);box-shadow:0 1px 6px rgba(170,120,85,.14)}
@@ -168,6 +168,57 @@
   .wk-emoji{font-size:34px;line-height:1}
   .weekend h3{margin:8px 0 4px;font-size:17px}
   .weekend p{margin:0;color:var(--ink-soft);font-size:13.5px;line-height:1.6}
+
+  /* meal */
+  .meal{background:linear-gradient(180deg,#FFFDFA,#FFF8F0)}
+  .meal-head{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+  .meal-ico{
+    width:30px;height:30px;border-radius:10px;flex:0 0 auto;
+    background:#FFEBD6;display:grid;place-items:center;font-size:16px;
+  }
+  .meal-head b{font-size:16px;letter-spacing:-.2px}
+  .meal-date{
+    margin-left:auto;flex:0 0 auto;white-space:nowrap;
+    font-size:11.5px;font-weight:800;color:var(--accent-deep);
+    background:var(--accent-soft);padding:4px 9px;border-radius:999px;
+  }
+  .dishes{display:flex;flex-wrap:wrap;gap:6px}
+  .dish{
+    background:#fff;border:1px solid #F4E7DB;border-radius:10px;
+    padding:6px 10px;font-size:13.5px;font-weight:700;color:#4A3E35;
+    letter-spacing:-.2px;line-height:1.35;word-break:keep-all;
+  }
+  .dish sup{
+    font-size:9px;font-weight:800;color:#C4835F;margin-left:2px;
+    vertical-align:super;letter-spacing:0;
+  }
+  .meal-foot{display:flex;align-items:center;gap:8px;margin-top:10px;min-height:22px}
+  .kcal{
+    font-size:11.5px;font-weight:800;color:#96705A;background:#FFEFE2;
+    padding:4px 9px;border-radius:999px;white-space:nowrap;
+  }
+  .alg-btn{
+    margin-left:auto;border:0;background:transparent;color:var(--muted);
+    font-family:inherit;font-size:11.5px;font-weight:700;padding:6px 2px;cursor:pointer;
+    text-decoration:underline;text-underline-offset:2px;
+  }
+  .alg-note{margin:6px 0 14px;font-size:11px;color:var(--muted);line-height:1.6;text-align:center}
+  .alg-note .alg-btn{margin:0;font-size:11.5px}
+  .weeknav{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+  .weeknav button{
+    flex:0 0 auto;width:38px;height:38px;border:1px solid var(--line);background:#fff;
+    color:var(--ink-soft);border-radius:12px;font-family:inherit;font-size:17px;
+    font-weight:800;line-height:1;cursor:pointer;box-shadow:var(--shadow);
+  }
+  .weeknav button:disabled{opacity:.35;cursor:default}
+  .weeknav .wk-label{
+    flex:1;text-align:center;font-size:14px;font-weight:800;letter-spacing:-.2px;line-height:1.3;
+  }
+  .weeknav .wk-label span{
+    display:block;font-size:11.5px;font-weight:700;color:var(--muted);
+    letter-spacing:0;margin-top:1px;
+  }
+  .meal-day .dayhead .kcal{margin-left:auto}
 
   /* week view */
   .kidtabs{display:flex;gap:7px;margin-bottom:12px}
@@ -335,8 +386,9 @@
 
   <nav class="tabs" role="tablist" aria-label="보드 보기">
     <button class="tab active" data-view="today" role="tab">오늘</button>
-    <button class="tab" data-view="week" role="tab">주간 시간표</button>
-    <button class="tab" data-view="homework" role="tab">숙제·준비물</button>
+    <button class="tab" data-view="week" role="tab" title="주간 시간표">시간표</button>
+    <button class="tab" data-view="homework" role="tab" title="숙제·준비물">숙제</button>
+    <button class="tab" data-view="meal" role="tab" title="함박초 급식">🍱 급식</button>
   </nav>
 
   <div class="edit-bar" id="editBar" hidden>편집 중 · 회색 ✎ 항목을 누르면 고칠 수 있고, <b>＋</b>로 추가할 수 있어요</div>
@@ -367,9 +419,13 @@
     <section id="view-homework" class="view" hidden>
       <div id="hwBody"></div>
     </section>
+
+    <section id="view-meal" class="view" hidden>
+      <div id="mealBody"></div>
+    </section>
   </main>
 
-  <footer class="note">홈 화면에 추가하면 앱처럼 열려요<br>브라우저 메뉴 → ‘홈 화면에 추가’</footer>
+  <footer class="note">급식표 · 함박초등학교 NEIS<br>홈 화면에 추가하면 앱처럼 열려요 · 브라우저 메뉴 → ‘홈 화면에 추가’</footer>
 </div>
 
 <div class="sheet-wrap" id="sheet" hidden>
@@ -609,6 +665,260 @@
     return Math.floor(m/60) + '시간' + (m % 60 ? ' ' + (m % 60) + '분' : '');
   }
 
+  /* ---------- 급식 (함박초 NEIS) ---------- */
+  var NEIS = { office:'J10', school:'7751355', name:'함박초등학교' };
+  var KEY_MEALS = 'kidsboard.meals.v1';
+  var KEY_ALG = 'kidsboard.allergy.v1';
+
+  var mealIndex = {};        // 'YYYY-MM-DD' -> meal
+  var mealLive = {};         // NEIS에서 직접 받아 둔 것(휴대폰 저장소 캐시)
+  var mealFetched = {};      // 주 단위로 이미 요청한 범위
+  var staticMealsLoaded = false;
+  var mealWeekOffset = 0;
+  var showAllergy = false;
+
+  function pad2(n){ return ('0' + n).slice(-2); }
+  function ymdOf(d){ return d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate()); }
+  function startOfToday(){ var k = kstNow(); return new Date(k.getFullYear(), k.getMonth(), k.getDate()); }
+  function mondayOf(d){
+    var dow = d.getDay();
+    var diff = (dow === 0) ? -6 : (1 - dow);
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate() + diff);
+  }
+  function weekMonday(offset){
+    var m = mondayOf(kstNow());
+    return new Date(m.getFullYear(), m.getMonth(), m.getDate() + 7 * (offset || 0));
+  }
+  /* 오늘 탭에서 고른 요일이 실제로 며칠인지: 이번 주 해당 요일, 이미 지났으면 다음 주 */
+  function dateForDow(dow){
+    var t = startOfToday();
+    var m = mondayOf(t);
+    var d = new Date(m.getFullYear(), m.getMonth(), m.getDate() + dow - 1);
+    if(d < t) d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 7);
+    return d;
+  }
+  function mealOf(key){ return mealIndex[key] || null; }
+
+  function cleanDish(raw){
+    var s = String(raw || '').trim(), al = [], m;
+    if(!s) return { name:'', allergy:[] };
+    while((m = /\(([^()]*)\)\s*$/.exec(s))){
+      var inner = m[1].trim();
+      if(/^[\d.\s]+$/.test(inner)){
+        al = inner.split(/[.\s]+/).filter(function(x){ return /^\d+$/.test(x); });
+        s = s.slice(0, m.index).trim();
+        continue;
+      }
+      break;
+    }
+    s = s.replace(/\s*\((?:초|중|고)\)\s*$/, '')
+         .replace(/\u2665/g, '')
+         .replace(/\s{2,}/g, ' ')
+         .trim();
+    if(/[가-힣]m$/.test(s)) s = s.slice(0, -1);
+    return { name:s, allergy:al };
+  }
+
+  function parseNeis(json){
+    var out = {};
+    var blk = json && json.mealServiceDietInfo;
+    if(!blk || !blk.length) return out;
+    var rows = [];
+    blk.forEach(function(p){ if(p && p.row) rows = rows.concat(p.row); });
+    rows.forEach(function(r){
+      if(r.MMEAL_SC_CODE !== '2') return;                 // 중식만
+      var y = String(r.MLSV_YMD || '');
+      if(y.length !== 8) return;
+      var key = y.slice(0,4) + '-' + y.slice(4,6) + '-' + y.slice(6,8);
+      if(out[key]) return;
+      var dishes = String(r.DDISH_NM || '').split(/<br\s*\/?>/i)
+        .map(cleanDish).filter(function(x){ return x.name; });
+      var cal = String(r.CAL_INFO || '').replace(/\s*kcal/i, '').trim();
+      var num = parseFloat(cal);
+      out[key] = {
+        ymd:y, date:key, meal:r.MMEAL_SC_NM || '중식',
+        dishes:dishes, cal:String(r.CAL_INFO || '').trim(),
+        calNum: isNaN(num) ? null : num
+      };
+    });
+    return out;
+  }
+
+  function mergeMeals(obj){
+    if(!obj) return 0;
+    var n = 0;
+    Object.keys(obj).forEach(function(k){
+      if(!obj[k] || !obj[k].dishes) return;
+      if(!mealIndex[k]) n++;
+      mealIndex[k] = obj[k];
+    });
+    return n;
+  }
+
+  function loadMealCache(){
+    try{
+      var raw = localStorage.getItem(KEY_MEALS);
+      if(raw){
+        var p = JSON.parse(raw);
+        if(p && p.meals){
+          mealLive = p.meals;
+          mergeMeals(p.meals);
+        }
+      }
+    }catch(e){}
+    try{ showAllergy = localStorage.getItem(KEY_ALG) === '1'; }catch(e){}
+  }
+  function saveMealCache(){
+    try{ localStorage.setItem(KEY_MEALS, JSON.stringify({ savedAt: Date.now(), meals: mealLive })); }catch(e){}
+  }
+
+  function loadStaticMeals(){
+    fetch('./meals.json', { cache:'no-cache' }).then(function(r){
+      return r.ok ? r.json() : null;
+    }).then(function(d){
+      if(!d || !d.meals) return;
+      staticMealsLoaded = true;
+      mergeMeals(d.meals);
+      renderMealViews();
+    }).catch(function(){});
+  }
+
+  function neisUrl(fromYmd, toYmd){
+    return 'https://open.neis.go.kr/hub/mealServiceDietInfo?Type=json' +
+      '&ATPT_OFCDC_SC_CODE=' + NEIS.office +
+      '&SD_SCHUL_CODE=' + NEIS.school +
+      '&MLSV_FROM_YMD=' + fromYmd + '&MLSV_TO_YMD=' + toYmd;
+  }
+
+  /* 월~금 5일치를 한 번에 받아 옵니다(키 없이도 되는 범위). 실패하면 meals.json·저장된 자료로 보여 줍니다. */
+  function fetchMealsForWeek(offset){
+    var mon = weekMonday(offset);
+    var at = ymdOf(mon);
+    if(mealFetched[at]) return;
+    mealFetched[at] = true;
+    var fri = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + 4);
+    var from = ymdOf(mon).replace(/-/g, '');
+    var to = ymdOf(fri).replace(/-/g, '');
+    fetch(neisUrl(from, to), { cache:'no-store' }).then(function(r){
+      return r.ok ? r.json() : null;
+    }).then(function(j){
+      var got = parseNeis(j);
+      var fresh = 0;
+      Object.keys(got).forEach(function(k){
+        if(!mealLive[k]) fresh++;
+        mealLive[k] = got[k];
+        mealIndex[k] = got[k];
+      });
+      if(fresh) saveMealCache();
+      renderMealViews();
+    }).catch(function(){
+      mealFetched[at] = false;   // 다음에 다시 시도
+    });
+  }
+
+  function renderMealViews(){
+    if(view === 'today') renderToday();
+    if(view === 'meal') renderMeal();
+  }
+
+  function dishesHtml(dishes){
+    return dishes.map(function(d){
+      var sup = (showAllergy && d.allergy && d.allergy.length)
+        ? '<sup>' + esc(d.allergy.join('.')) + '</sup>' : '';
+      return '<span class="dish">' + esc(d.name) + sup + '</span>';
+    }).join('');
+  }
+  function hasAllergyInfo(dishes){
+    return dishes.some(function(d){ return d.allergy && d.allergy.length; });
+  }
+  function algBtnHtml(label){
+    return '<button type="button" class="alg-btn" data-alg="1" aria-pressed="' + (showAllergy ? 'true' : 'false') + '">' +
+      esc(label) + '</button>';
+  }
+
+  function mealCardHtml(date, emptyText){
+    var key = ymdOf(date);
+    var m = mealOf(key);
+    var names = ['일','월','화','수','목','금','토'];
+    var dateLabel = (date.getMonth()+1) + '월 ' + date.getDate() + '일 ' + names[date.getDay()] + '요일';
+    var head = '<header class="meal-head">' +
+        '<span class="meal-ico" aria-hidden="true">🍱</span>' +
+        '<b>함박초 급식</b>' +
+        '<span class="meal-date">' + esc(dateLabel) + '</span>' +
+      '</header>';
+    if(!m){
+      return '<section class="card meal">' + head +
+        '<p class="empty">' + esc(emptyText || '이 날 급식표는 아직 안 올라왔어요') + '</p>' +
+      '</section>';
+    }
+    var kcal = m.calNum ? '<span class="kcal">' + Math.round(m.calNum) + ' kcal</span>' : '';
+    return '<section class="card meal">' + head +
+      '<div class="dishes">' + dishesHtml(m.dishes) + '</div>' +
+      '<div class="meal-foot">' + kcal +
+        (hasAllergyInfo(m.dishes) ? algBtnHtml(showAllergy ? '알레르기 번호 숨기기' : '알레르기 번호') : '') +
+      '</div>' +
+    '</section>';
+  }
+
+  function weekLabel(offset){
+    if(offset === 0) return '이번 주';
+    if(offset === 1) return '다음 주';
+    if(offset === -1) return '지난 주';
+    return offset > 0 ? offset + '주 뒤' : (-offset) + '주 전';
+  }
+
+  function renderMeal(){
+    var mon = weekMonday(mealWeekOffset);
+    var fri = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + 4);
+    var t = startOfToday();
+    var todayKey = ymdOf(t);
+    var days = [], any = false;
+    for(var i = 0; i < 5; i++){
+      var d = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + i);
+      var m = mealOf(ymdOf(d));
+      if(m) any = true;
+      days.push({ d:d, m:m });
+    }
+
+    var html = '<div class="weeknav">' +
+        '<button type="button" data-week="-1" aria-label="지난 주"' + (mealWeekOffset <= -2 ? ' disabled' : '') + '>‹</button>' +
+        '<div class="wk-label">' + esc(weekLabel(mealWeekOffset)) + ' 급식' +
+          '<span>' + (mon.getMonth()+1) + '월 ' + mon.getDate() + '일 ~ ' + (fri.getMonth()+1) + '월 ' + fri.getDate() + '일</span>' +
+        '</div>' +
+        '<button type="button" data-week="1" aria-label="다음 주"' + (mealWeekOffset >= 2 ? ' disabled' : '') + '>›</button>' +
+      '</div>';
+
+    if(!any){
+      html += '<div class="card weekend" style="padding:30px 16px">' +
+        '<div class="wk-emoji">🍱</div>' +
+        '<h3>' + esc(weekLabel(mealWeekOffset)) + ' 급식표는 아직 없어요</h3>' +
+        '<p>학교에서 식단을 올리면 여기에 바로 보여요.<br>잠시 뒤 다시 열어 보세요.</p>' +
+      '</div>';
+    }else{
+      html += days.map(function(it){
+        var isToday = ymdOf(it.d) === todayKey;
+        var kcal = (it.m && it.m.calNum) ? '<span class="kcal">' + Math.round(it.m.calNum) + ' kcal</span>' : '';
+        var body = it.m
+          ? '<div class="dishes">' + dishesHtml(it.m.dishes) + '</div>'
+          : '<span class="empty-chip">이 날은 급식 정보가 없어요</span>';
+        return '<div class="card daycard meal-day' + (isToday ? ' today' : '') + '">' +
+          '<div class="dayhead">' +
+            '<span class="dn">' + DAY_NAMES[it.d.getDay()-1] + '</span>' +
+            '<span class="dsub">' + (it.d.getMonth()+1) + '/' + it.d.getDate() + '</span>' +
+            (isToday ? '<span class="dsub">오늘</span>' : '') +
+            kcal +
+          '</div>' + body +
+        '</div>';
+      }).join('');
+    }
+
+    html += '<p class="alg-note">알레르기 번호는 식약처 표시 기준 · ' +
+      algBtnHtml(showAllergy ? '번호 숨기기' : '번호 보기') + '</p>';
+
+    $('#mealBody').innerHTML = html;
+    fetchMealsForWeek(mealWeekOffset);
+  }
+
   /* ---------- 상태 ---------- */
   var view = 'today';
   var selDay = todayDow();
@@ -734,6 +1044,7 @@
     var isToday = (selDay === td);
     var html = '';
     if(isToday) html += summaryStrip(mins);
+    html += mealCardHtml(dateForDow(selDay), '이 날 급식표는 아직 안 올라왔어요');
     html += CHILDREN.map(function(ch){ return kidDayCard(ch, selDay, isToday, mins); }).join('');
     body.innerHTML = html;
   }
@@ -810,7 +1121,7 @@
   }
 
   function syncEditUi(){
-    var show = (view !== 'homework');
+    var show = (view !== 'homework' && view !== 'meal');
     $('#editBtn').hidden = !show;
     $('#editBar').hidden = !(show && editMode);
   }
@@ -821,10 +1132,12 @@
     $('#view-today').hidden = (v !== 'today');
     $('#view-week').hidden = (v !== 'week');
     $('#view-homework').hidden = (v !== 'homework');
+    $('#view-meal').hidden = (v !== 'meal');
     syncEditUi();
     if(v === 'today') renderToday();
     if(v === 'week') renderWeek();
     if(v === 'homework') renderHomework();
+    if(v === 'meal') renderMeal();
     window.scrollTo({ top:0, behavior:'smooth' });
   }
 
@@ -971,6 +1284,21 @@
 
     if(t.closest('#editBtn')){ setEdit(!editMode); return; }
     if(t.closest('#settingsToggle')){ $('#settingsBody').hidden = !$('#settingsBody').hidden; return; }
+
+    var wbtn = t.closest('[data-week]');
+    if(wbtn){
+      var step = parseInt(wbtn.getAttribute('data-week'), 10) || 0;
+      var next = Math.max(-2, Math.min(2, mealWeekOffset + step));
+      if(next !== mealWeekOffset){ mealWeekOffset = next; renderMeal(); }
+      return;
+    }
+
+    if(t.closest('[data-alg]')){
+      showAllergy = !showAllergy;
+      try{ localStorage.setItem(KEY_ALG, showAllergy ? '1' : '0'); }catch(e){}
+      renderMealViews();
+      return;
+    }
   });
 
   $('#fChild').addEventListener('click', function(e){
@@ -1121,9 +1449,12 @@
 
   /* ---------- 시작 ---------- */
   load();
+  loadMealCache();
   buildCatChips();
   renderAll();
   syncEditUi();
+  loadStaticMeals();
+  fetchMealsForWeek(0);
 
   setInterval(function(){
     renderHeader();
