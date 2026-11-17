@@ -330,7 +330,7 @@
       <h1>서연·서우 보드</h1>
       <p class="today-line" id="todayLine">불러오는 중…</p>
     </div>
-    <button class="icon-btn" id="editBtn" aria-pressed="false">편집</button>
+    <button class="icon-btn" id="editBtn" aria-pressed="false">일정 편집</button>
   </header>
 
   <nav class="tabs" role="tablist" aria-label="보드 보기">
@@ -579,9 +579,18 @@
     return (parseInt(p[0],10) || 0) * 60 + (parseInt(p[1],10) || 0);
   }
   function kstNow(){
+    var d = new Date();
     try{
-      return new Date(new Date().toLocaleString('en-US', { timeZone:'Asia/Seoul' }));
-    }catch(e){ return new Date(); }
+      var parts = new Intl.DateTimeFormat('en-US', {
+        timeZone:'Asia/Seoul', year:'numeric', month:'2-digit', day:'2-digit',
+        hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false
+      }).formatToParts(d);
+      var o = {};
+      parts.forEach(function(p){ o[p.type] = p.value; });
+      var h = parseInt(o.hour, 10);
+      if(h === 24) h = 0;
+      return new Date(parseInt(o.year,10), parseInt(o.month,10)-1, parseInt(o.day,10), h, parseInt(o.minute,10), parseInt(o.second,10));
+    }catch(e){ return d; }
   }
   function todayDow(){
     var d = kstNow().getDay();
@@ -823,7 +832,7 @@
   function setEdit(on){
     editMode = on;
     $('#editBtn').setAttribute('aria-pressed', on ? 'true' : 'false');
-    $('#editBtn').textContent = on ? '완료' : '편집';
+    $('#editBtn').textContent = on ? '완료' : '일정 편집';
     syncEditUi();
     renderToday();
     renderWeek();
