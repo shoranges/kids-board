@@ -425,7 +425,7 @@
     </section>
   </main>
 
-  <footer class="note">급식표 · 함박초등학교 NEIS<br>홈 화면에 추가하면 앱처럼 열려요 · 브라우저 메뉴 → ‘홈 화면에 추가’</footer>
+  <footer class="note">급식표 · 함박초등학교 NEIS<br>홈 화면에 추가하면 앱처럼 열려요<br>브라우저 메뉴 → ‘홈 화면에 추가’</footer>
 </div>
 
 <div class="sheet-wrap" id="sheet" hidden>
@@ -700,13 +700,27 @@
   function mealOf(key){ return mealIndex[key] || null; }
 
   function cleanDish(raw){
-    var s = String(raw || '').trim(), al = [], m;
+    var s = String(raw || '').trim(), al = [];
     if(!s) return { name:'', allergy:[] };
-    while((m = /\(([^()]*)\)\s*$/.exec(s))){
-      var inner = m[1].trim();
-      if(/^[\d.\s]+$/.test(inner)){
+    /* 괄호로 끝나면 짝이 맞는 ‘(’를 찾아 내용을 살핍니다.
+       - 숫자·점만 있으면 알레르기 번호 → 따로 나누어 둡니다.
+       - 너무 긴 설명(예: ‘세계김치의 날, 우리김치주간(선택)’)은 화면을 깔끔하게 하려고 접습니다. */
+    while(s.charAt(s.length - 1) === ')'){
+      var depth = 0, idx = -1, i;
+      for(i = s.length - 1; i >= 0; i--){
+        var ch = s.charAt(i);
+        if(ch === ')') depth++;
+        else if(ch === '('){ depth--; if(depth === 0){ idx = i; break; } }
+      }
+      if(idx < 0) break;
+      var inner = s.slice(idx + 1, s.length - 1).trim();
+      if(inner && /^[\d.\s]+$/.test(inner)){
         al = inner.split(/[.\s]+/).filter(function(x){ return /^\d+$/.test(x); });
-        s = s.slice(0, m.index).trim();
+        s = s.slice(0, idx).trim();
+        continue;
+      }
+      if(inner.length > 10){
+        s = s.slice(0, idx).trim();
         continue;
       }
       break;

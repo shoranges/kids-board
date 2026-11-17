@@ -47,15 +47,28 @@ def split_dish(raw):
     """'현미찰밥m (5.6)' -> ('현미찰밥', ['5','6'])"""
     s = (raw or "").strip()
     allergy = []
-    # 뒤에서부터 '숫자와 점'만 있는 괄호를 떼어 냅니다.
-    while True:
-        m = re.search(r"\s*\(([^()]*)\)\s*$", s)
-        if not m:
+    # 괄호로 끝나면 짝이 맞는 '('를 찾아 내용을 살핍니다.
+    while s.endswith(")"):
+        depth = 0
+        idx = -1
+        for i in range(len(s) - 1, -1, -1):
+            ch = s[i]
+            if ch == ")":
+                depth += 1
+            elif ch == "(":
+                depth -= 1
+                if depth == 0:
+                    idx = i
+                    break
+        if idx < 0:
             break
-        inner = m.group(1).strip()
-        if ALLERGY_ONLY.match(inner):
+        inner = s[idx + 1 : -1].strip()
+        if inner and ALLERGY_ONLY.match(inner):
             allergy = [p for p in re.split(r"[.\s]+", inner) if p.isdigit()]
-            s = s[: m.start()].strip()
+            s = s[:idx].strip()
+            continue
+        if len(inner) > 10:          # 너무 긴 설명 괄호는 접기
+            s = s[:idx].strip()
             continue
         break
     s = re.sub(r"\s*\((?:초|중|고)\)\s*$", "", s)   # 학교급 표식
