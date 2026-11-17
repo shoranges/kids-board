@@ -601,7 +601,7 @@
       .sort(function(a,b){
         var d = toMin(a.start) - toMin(b.start);
         if(d) return d;
-        return toMin(a.end || '99:99') - toMin(b.end || '99:99');
+        return (a.end ? toMin(a.end) : toMin(a.start)) - (b.end ? toMin(b.end) : toMin(b.start));
       });
   }
   function minsLabel(m){
