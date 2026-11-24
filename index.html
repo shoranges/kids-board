@@ -1151,8 +1151,8 @@
     if(st.day == null) st.day = todayDow() || 1;
     var list = studyListOf(st.child, st.day);
     var note = (st.child === 'seoyeon')
-      ? '서연이는 매일 같은 목록이 기본이에요. 다른 요일에 따로 적어도 돼요.'
-      : '서우는 요일마다 목록이 달라요. 요일을 눌러 확인하고 고쳐 보세요.';
+      ? '서연이는 매일 같은 목록이 기본이에요. 글자를 눌러 바로 고치고, ✕로 지울 수 있어요.'
+      : '서우는 요일마다 목록이 달라요. 요일을 누르고, 글자를 눌러 바로 고쳐 보세요.';
     var days = [1,2,3,4,5,6,0].map(function(d){
       return '<button type="button" data-edact="day" data-edroom="' + room + '" data-day="' + d + '" class="' + (d === st.day ? 'on' : '') + ((d === 0 || d === 6) ? ' wknd' : '') + '">' + DAY_LABELS[d] + '</button>';
     }).join('');
