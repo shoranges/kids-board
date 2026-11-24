@@ -1,12 +1,13 @@
 {
-  "name": "서연·서우 보드",
+  "name": "서연·서우 홈 보드",
   "short_name": "서연·서우",
-  "description": "서연·서우 학원 시간표와 숙제·준비물 보드",
+  "description": "서연·서우 홈 보드 — 시계·날씨·공부 목록·수학 퀴즈·시간표·급식",
+  "id": "./",
   "lang": "ko",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "any",
   "background_color": "#FFF8F2",
   "theme_color": "#FFF6EE",
   "icons": [
