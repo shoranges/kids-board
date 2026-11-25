@@ -21,6 +21,8 @@ GitHub Pages로 열리는 정적 페이지이며, 설치형 앱처럼 홈 화면
   - **태블릿별 전용 화면**: `hanja/seoyeon.html`(서연 고정) · `hanja/seowoo.html`(서우 고정). 각자 태블릿에서 이 주소를 열어 홈 화면에 추가하면 그 아이 화면만 열리고, 상단 전환 스위치 대신 이름 배지만 보입니다. 공용 화면(`hanja/`)에는 두 전용 화면 바로가기가 있고, 보드 홈 `매일 한자` 카드 아래에도 `서연 한자`·`서우 한자` 링크가 있습니다.
   - `hanja/seoyeon.html`·`seowoo.html`은 `hanja/index.html`에서 `tools/build-profiles.py`로 만들어 냅니다. 화면을 고칠 때는 `hanja/index.html`·`app.js`를 고친 뒤 `python3 tools/build-profiles.py`를 다시 돌려 주세요(전용 페이지에 직접 쓰면 다음 생성 때 덮어써집니다).
 - **편집**: 공부 목록을 아이·요일별로 추가·수정·삭제·기본값 복원. 홈 카드의 `✏️ 목록 수정`을 눌러도 같은 편집기가 열립니다. 시간표 백업(JSON)·불러오기·초기화도 여기서 합니다.
+- **태블릿별 전용 보드**: `seoyeon.html`(서연 고정) · `seowoo.html`(서우 고정). 각자 태블릿에서 이 주소를 열어 홈 화면에 추가하면 그 아이 시간표·공부 체크리스트·급식·`서연 한자`/`서우 한자`만 보이고, 다른 아이 카드·전환 버튼은 나오지 않습니다. 공용 홈 보드 아래에는 `서연 전용 보드`·`서우 전용 보드` 바로가기가 있습니다.
+  - 전용 보드는 `index.html`에서 `tools/build-profiles.py`로 만들어 냅니다(`manifest-seoyeon.json`·`manifest-seowoo.json` 포함). 공용 화면을 고친 뒤 `python3 tools/build-profiles.py`를 다시 돌려 주세요.
 
 공부 목록 기본값은 서연(매일): 학교숙제·영어숙제·수학숙제·한글책 읽기·리딩게이트,
 서우(요일별): 월 퍼플 Into Reading/디딤돌/소마셈 나눗셈/리딩/한글책/국어 2장, 화 퍼플 Know It Show It/라이팅/디딤돌/소마셈 덧셈뺄셈, 수·금은 퍼플 Language Fundamentals·Main Writing, 목은 퍼플 IXL/Phonics Activity/1031 등입니다.
@@ -30,12 +32,14 @@ GitHub Pages로 열리는 정적 페이지이며, 설치형 앱처럼 홈 화면
 
 ## 파일
 
-- `index.html` — 화면과 동작 전체
+- `index.html` — 공용 화면과 동작 전체(두 아이)
+- `seoyeon.html`·`manifest-seoyeon.json` — 서연 전용 보드·앱 정보(가로 고정)
+- `seowoo.html`·`manifest-seowoo.json` — 서우 전용 보드·앱 정보(가로 고정)
 - `hanja/` — 매일 한자 학습 앱 (`index.html`, `app.js`, `data-a.js`·`data-b.js`·`data-c.js` 커리큘럼, `data-d.js` 110자 어원·원리, `manifest.json`)
   - `seoyeon.html`·`manifest-seoyeon.json` — 서연 전용 화면·앱 정보
   - `seowoo.html`·`manifest-seowoo.json` — 서우 전용 화면·앱 정보
 
-- `tools/build-profiles.py` — `hanja/index.html`에서 서연·서우 전용 페이지를 만드는 스크립트
+- `tools/build-profiles.py` — `index.html`·`hanja/index.html`에서 서연·서우 전용 페이지와 전용 매니페스트를 만드는 스크립트
 - `meals.json` — 함박초 급식표(이번 달 + 다음 달, 중식). 없거나 비어 있으면 화면이 NEIS에서 직접 받아 옵니다.
 - `manifest.json`, `sw.js`, `icon*.png`, `apple-touch-icon.png` — 홈 화면 추가 및 오프라인용 (`sw.js`의 `CACHE` 버전을 올리면 설치된 기기도 새 화면을 받습니다)
 - `tools/make-icons.py` — 아이콘 생성 스크립트

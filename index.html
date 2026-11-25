@@ -481,6 +481,51 @@
   .hanja-kids .hk.seoyeon{color:#B4562F;border-color:#F3D2B8;background:#FFF7EE}
   .hanja-kids .hk.seowoo{color:#2F6389;border-color:#C6DDF2;background:#F1F8FF}
 
+  /* 태블릿별 전용 보드 바로가기 (엄마 공용 화면 아래) */
+  .profile-links{margin:18px 0 0;padding:14px 16px}
+  .pl-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .pl-head b{font-size:14.5px;letter-spacing:-.3px}
+  .pl-head span{font-size:11.5px;color:var(--muted);font-weight:700}
+  .pl-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+  .pl{display:flex;align-items:center;gap:9px;text-decoration:none;border-radius:14px;padding:11px 13px;border:1px solid var(--line);background:#fff;transition:.15s}
+  .pl .dot{width:10px;height:10px;border-radius:50%;flex:0 0 auto}
+  .pl b{font-size:14px;font-weight:900;letter-spacing:-.3px}
+  .pl .sub{font-size:11px;font-weight:800;color:var(--muted);margin-left:auto}
+  .pl.seoyeon{border-color:#F3D2B8;background:#FFF7EE}
+  .pl.seoyeon .dot{background:#EF8A62}
+  .pl.seoyeon b{color:#B4562F}
+  .pl.seowoo{border-color:#C6DDF2;background:#F1F8FF}
+  .pl.seowoo .dot{background:#6FA9D6}
+  .pl.seowoo b{color:#2F6389}
+  .pl:active{transform:scale(.995)}
+
+  /* 전용 화면 배지 · 다른 아이 화면 숨김 */
+  .badge-profile{
+    display:inline-flex;align-items:center;gap:5px;margin-top:3px;
+    font-size:11px;font-weight:900;letter-spacing:-.2px;
+    color:#C25E33;background:#FFE3D5;border-radius:999px;padding:2px 9px;
+  }
+  .badge-profile::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+  html[data-board] .hanja-kids,
+  html[data-board] #kidTabs,
+  html[data-board] #quizWho,
+  html[data-board] #profileLinks,
+  html[data-board] #fChild,
+  html[data-board] #fChildLabel{display:none !important}
+  html[data-board] .ed > .seg[data-edact="childwrap"]{display:none}
+  html[data-board] .hb-kids{grid-template-columns:1fr}
+  html[data-board="seowoo"] .badge-profile{color:#2F6389;background:#DCEBF9}
+  html[data-board="seowoo"]{
+    --accent:#6FA9D6;--accent-deep:#3F7FAE;--accent-soft:#DFEEFA;
+    --bg:#F7FBFF;--bg2:#EAF3FB;
+  }
+  html[data-board="seowoo"] body{
+    background:
+      radial-gradient(120% 60% at 50% 0%, #E9F3FD 0%, rgba(233,243,253,0) 70%),
+      var(--bg);
+  }
+  html[data-board="seowoo"] .tabs{background:rgba(247,251,255,.92)}
+
   /* 가운데 위젯 */
   .hb-grid{display:grid;gap:12px;grid-template-columns:repeat(4,minmax(0,1fr))}
   .hb-grid .quiz{grid-column:span 2}
@@ -598,6 +643,7 @@
     <div class="mark" aria-hidden="true">📚</div>
     <div class="brand-txt">
       <h1>서연·서우 홈 보드</h1>
+      <span class="badge-profile" id="profileBadge" hidden></span>
       <p class="today-line" id="todayLine">불러오는 중…</p>
     </div>
     <button class="icon-btn" id="editBtn" aria-pressed="false" hidden>일정 편집</button>
@@ -742,6 +788,14 @@
     </section>
   </main>
 
+  <div class="card profile-links" id="profileLinks">
+    <div class="pl-head"><b>태블릿별 전용 보드</b><span>아이 태블릿에는 자기 보드만 ‘홈 화면에 추가’ 해 주세요</span></div>
+    <div class="pl-row">
+      <a class="pl seoyeon" href="./seoyeon.html"><span class="dot" aria-hidden="true"></span><b>서연 전용 보드</b><span class="sub">초5</span></a>
+      <a class="pl seowoo" href="./seowoo.html"><span class="dot" aria-hidden="true"></span><b>서우 전용 보드</b><span class="sub">초2</span></a>
+    </div>
+  </div>
+
   <footer class="note">급식표 · 함박초등학교 NEIS<br>홈 화면에 추가하면 앱처럼 열려요<br>브라우저 메뉴 → ‘홈 화면에 추가’</footer>
 </div>
 
@@ -751,7 +805,7 @@
     <div class="grab"></div>
     <h2 id="sheetTitle">일정 추가</h2>
 
-    <label class="fl">아이</label>
+    <label class="fl" id="fChildLabel">아이</label>
     <div class="seg" id="fChild">
       <button type="button" data-v="seoyeon">서연</button>
       <button type="button" data-v="seowoo">서우</button>
@@ -808,6 +862,15 @@
 <script>
 (function(){
   'use strict';
+
+  /* ---------- 전용 보드 여부 ---------- */
+  // tools/build-profiles.py 가 <html lang="ko" data-board="seoyeon"> 처럼 넣어 주면
+  // 그 아이 것만 보여 주고, 공용 index.html 에서는 두 아이를 다 보여 줍니다.
+  var BOARD_CHILD = (document.documentElement.getAttribute('data-board') || '').trim();
+  function boardChildren(){
+    if(!BOARD_CHILD) return CHILDREN;
+    return CHILDREN.filter(function(c){ return c.id === BOARD_CHILD; });
+  }
 
   /* ---------- 기본 데이터 ---------- */
   var CATS = {
@@ -1173,13 +1236,13 @@
   function renderStudyCards(){
     var box = $('#studyCards');
     if(!box) return;
-    box.innerHTML = CHILDREN.map(studyCardHtml).join('');
+    box.innerHTML = boardChildren().map(studyCardHtml).join('');
   }
 
   /* ---------- 공부 목록 편집기 (홈 카드 + 편집 탭 공용) ---------- */
   var edState = {
-    sheet: { child:'seoyeon', day: kstNow().getDay() },
-    tab:   { child:'seoyeon', day: (todayDow() || 1) }
+    sheet: { child: BOARD_CHILD || 'seoyeon', day: kstNow().getDay() },
+    tab:   { child: BOARD_CHILD || 'seoyeon', day: (todayDow() || 1) }
   };
 
   function editorHtml(room){
@@ -1421,7 +1484,7 @@
   /* ================= 수학 퀴즈 ================= */
   var KEY_QUIZ = 'kidsboard.quiz.v1';
   var quizState = {
-    child: 'seoyeon', mode: 'mul', q: null, solved: false, tried: false,
+    child: BOARD_CHILD || 'seoyeon', mode: 'mul', q: null, solved: false, tried: false,
     score: { seoyeon:{ ok:0, try:0 }, seowoo:{ ok:0, try:0 } },
     stars: { seoyeon:0, seowoo:0 }
   };
@@ -2123,10 +2186,10 @@
   var view = 'home';
   var ttSub = 'today';
   var selDay = todayDow();
-  var weekChild = 'seoyeon';
+  var weekChild = BOARD_CHILD || 'seoyeon';
   var editMode = false;
   var editId = null;
-  var fChild = 'seoyeon', fDay = 1, fCat = 'etc';
+  var fChild = BOARD_CHILD || 'seoyeon', fDay = 1, fCat = 'etc';
 
   /* ---------- 렌더 ---------- */
   function renderHeader(){
@@ -2166,7 +2229,7 @@
   }
 
   function summaryStrip(mins){
-    var rows = CHILDREN.map(function(ch){
+    var rows = boardChildren().map(function(ch){
       var list = dayList(ch.id, selDay);
       var st = statusOf(list, mins);
       var main = '', sub = '';
@@ -2246,12 +2309,12 @@
     var html = '';
     if(isToday) html += summaryStrip(mins);
     html += mealCardHtml(dateForDow(selDay), '이 날 급식표는 아직 안 올라왔어요');
-    html += CHILDREN.map(function(ch){ return kidDayCard(ch, selDay, isToday, mins); }).join('');
+    html += boardChildren().map(function(ch){ return kidDayCard(ch, selDay, isToday, mins); }).join('');
     body.innerHTML = html;
   }
 
   function renderWeek(){
-    $('#kidTabs').innerHTML = CHILDREN.map(function(ch){
+    $('#kidTabs').innerHTML = BOARD_CHILD ? '' : CHILDREN.map(function(ch){
       return '<button class="kidtab' + (weekChild === ch.id ? ' active' : '') + '" data-child="' + ch.id + '" style="--c:' + ch.color + '">' + esc(ch.name) + '</button>';
     }).join('');
 
@@ -2281,7 +2344,7 @@
   }
 
   function renderHomework(){
-    $('#hwBody').innerHTML = CHILDREN.map(function(ch){
+    $('#hwBody').innerHTML = boardChildren().map(function(ch){
       var items = homework[ch.id] || [];
       var left = items.filter(function(i){ return !i.done; }).length;
       var list = items.map(function(it){
@@ -2386,7 +2449,7 @@
     opts = opts || {};
     var c = opts.id ? classes.filter(function(x){ return x.id === opts.id; })[0] : null;
     editId = c ? c.id : null;
-    fChild = c ? c.child : (opts.child || 'seoyeon');
+    fChild = c ? c.child : (opts.child || BOARD_CHILD || 'seoyeon');
     fDay = c ? c.day : (opts.day || todayDow() || 1);
     fCat = c ? c.cat : (opts.cat || 'etc');
 
@@ -2780,6 +2843,14 @@
   });
 
   /* ---------- 시작 ---------- */
+  if(BOARD_CHILD){
+    var bc = CHILDREN.filter(function(c){ return c.id === BOARD_CHILD; })[0];
+    if(bc){
+      var pb = $('#profileBadge');
+      if(pb){ pb.hidden = false; pb.textContent = bc.name + ' 전용'; }
+      document.title = bc.name + ' 홈 보드';
+    }
+  }
   load();
   loadMealCache();
   loadStudy();

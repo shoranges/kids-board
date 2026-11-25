@@ -1,7 +1,8 @@
 /* 서연·서우 보드 — 오프라인에서도 열리도록 화면을 저장해 둡니다 */
-var CACHE = 'kids-board-v7';
+var CACHE = 'kids-board-v8';
 var ASSETS = [
   './', './index.html', './meals.json', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png',
+  './seoyeon.html', './seowoo.html', './manifest-seoyeon.json', './manifest-seowoo.json',
   './hanja/', './hanja/index.html', './hanja/manifest.json',
   './hanja/seoyeon.html', './hanja/seowoo.html',
   './hanja/manifest-seoyeon.json', './hanja/manifest-seowoo.json',
@@ -45,6 +46,9 @@ self.addEventListener('fetch', function (e) {
         if (url.pathname.indexOf('/hanja/seoyeon.html') >= 0) return caches.match('./hanja/seoyeon.html');
         if (url.pathname.indexOf('/hanja/seowoo.html') >= 0) return caches.match('./hanja/seowoo.html');
         if (url.pathname.indexOf('/hanja/') >= 0) return caches.match('./hanja/index.html');
+        // 전용 보드 주소를 새로 열 때도 오프라인에서 열리도록.
+        if (url.pathname.indexOf('/seoyeon.html') >= 0) return caches.match('./seoyeon.html');
+        if (url.pathname.indexOf('/seowoo.html') >= 0) return caches.match('./seowoo.html');
         return caches.match('./index.html');
       });
     })

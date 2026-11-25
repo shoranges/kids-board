@@ -1,0 +1,33 @@
+{
+  "name": "서우 키즈 보드",
+  "short_name": "서우 보드",
+  "description": "서우 전용 홈 보드 — 시간표·공부 목록·급식·매일 한자",
+  "id": "./seowoo.html",
+  "lang": "ko",
+  "start_url": "./seowoo.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#F7FBFF",
+  "theme_color": "#F3F9FF",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
