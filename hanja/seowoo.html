@@ -6,7 +6,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>매일 한자 · 서우</title>
-<meta name="description" content="구몬한자 스타일 매일 한자 학습 — 8급부터 7급 기초, 교과서 사회·과학 어휘, 따라쓰기, 문장 만들기">
+<meta name="description" content="구몬한자·장원한자 스타일 4단계 매일 한자 워크북 — 어원 이야기, 4칸 반복 덧쓰기, 단어·문장 퀴즈, 누적 복습">
 <meta name="theme-color" content="#FFF8F2">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -39,7 +39,7 @@
     font-size:16px;line-height:1.5;-webkit-text-size-adjust:100%;
     min-height:100vh;padding-bottom:calc(36px + env(safe-area-inset-bottom));
   }
-  .app{max-width:1120px;margin:0 auto;padding:0 16px}
+  .app{max-width:1280px;margin:0 auto;padding:0 16px}
   .hanja{font-family:"Nanum Myeongjo","Noto Serif KR","Noto Serif CJK KR","Batang","Apple SD Gothic Neo",serif;font-weight:700}
 
   /* header */
@@ -448,6 +448,114 @@
     padding:11px 16px;border-radius:12px;box-shadow:0 10px 26px rgba(0,0,0,.22);text-align:center;
   }
 
+  /* ---------- 워크북 4단계 ---------- */
+  .workbook{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+  .workbook > section{min-width:0}
+  .stephead{display:flex;align-items:flex-start;gap:9px;margin-bottom:10px}
+  .stepno{
+    flex:0 0 auto;display:inline-flex;align-items:center;background:var(--accent);color:#fff;
+    font-size:11px;font-weight:900;padding:4px 9px;border-radius:999px;white-space:nowrap;letter-spacing:-.2px;margin-top:1px;
+  }
+  .stephead h2{margin:0;font-size:15.5px;font-weight:900;letter-spacing:-.4px;line-height:1.3}
+  .stephead p{margin:2px 0 0;font-size:11.5px;font-weight:700;color:var(--muted);line-height:1.5;word-break:keep-all}
+  .step1 .chars{gap:9px}
+  .step1 .ccard{padding:12px 13px}
+  .step1 .glyph{width:84px;height:84px;font-size:54px}
+  .step1 .c-words{gap:4px;margin-top:8px}
+  .step1 .word{padding:6px 8px;gap:4px 6px}
+  .step1 .word .wh{font-size:15px}
+  .step1 .word .wm{font-size:11px;line-height:1.4}
+
+  /* 장원식 어원 카드 */
+  .origin{
+    display:flex;gap:7px;align-items:flex-start;margin-top:9px;padding:9px 11px;
+    background:#FFF8EE;border:1px dashed #EAD3BC;border-radius:12px;
+  }
+  .otype{
+    flex:0 0 auto;font-size:10px;font-weight:900;color:#8C5A2E;background:#FBE6CE;
+    border-radius:6px;padding:2px 6px;margin-top:1px;white-space:nowrap;letter-spacing:-.2px;
+  }
+  .ostory{margin:0;font-size:12px;font-weight:700;line-height:1.55;color:var(--ink-soft);word-break:keep-all}
+
+  /* 4칸 연습판 (구몬식) */
+  .tchead{justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+  .tracebadge{
+    font-size:11px;font-weight:900;color:var(--muted);background:#F7EEE5;border-radius:999px;
+    padding:4px 9px;white-space:nowrap;
+  }
+  .tracebadge.on{background:var(--green-soft);color:#2F6B4F}
+  .cells{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .tcellwrap{position:relative;min-width:0}
+  .tcell{
+    display:block;width:100%;aspect-ratio:1/1;border-radius:13px;background:#FFFDF8;
+    box-shadow:inset 0 0 0 1px var(--line);touch-action:none;cursor:crosshair;
+  }
+  .tcellwrap.next .tcell{box-shadow:inset 0 0 0 2px #F0A87F}
+  .tcellno{
+    position:absolute;left:6px;top:6px;font-size:9.5px;font-weight:900;color:var(--muted);
+    background:rgba(255,253,248,.92);border-radius:6px;padding:2px 5px;pointer-events:none;white-space:nowrap;
+  }
+  .tcellwrap.inked .tcellno{color:#2F6B4F;background:#E7F6EC}
+  .tcellwrap.inked .tcellno::after{content:" ✓"}
+  .tcellclear{
+    position:absolute;right:4px;bottom:4px;border:0;background:rgba(255,253,248,.92);color:var(--ink-soft);
+    font-size:12px;line-height:1;padding:6px 7px;border-radius:9px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.08);
+  }
+  .tcellclear:active{background:var(--accent-soft)}
+  .trace .tools{margin-top:8px}
+  .trace .tools button{min-height:38px;font-size:12px}
+
+  /* 3단계 3칸 */
+  .s3grid{display:grid;gap:10px;grid-template-columns:minmax(0,1fr)}
+  .panel{border:1px solid var(--line);border-radius:14px;padding:12px;background:#FFFDFA;min-width:0}
+  .panel .chead{margin-bottom:8px}
+  .panel .chead h2{font-size:13px}
+  .panel .lead{font-size:11.5px;margin-bottom:8px}
+  .panel .qbig{font-size:52px;margin:4px 0 6px}
+  .panel .qbig.word{font-size:34px}
+  .panel .opts button{font-size:13px;padding:9px 11px}
+  .srctag{font-size:9.5px;font-weight:900;color:#2F6389;background:#EAF3FC;border-radius:5px;padding:1px 5px;margin-right:4px}
+
+  /* 단계 안내 레일 */
+  .steprail{
+    display:flex;gap:5px;margin:0 0 12px;padding:5px;overflow-x:auto;
+    background:#FFFDF9;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);
+  }
+  .srail{
+    flex:1 1 0;display:flex;align-items:center;justify-content:center;gap:5px;text-decoration:none;
+    color:var(--ink-soft);font-size:11.5px;font-weight:900;padding:7px 6px;border-radius:10px;
+    white-space:nowrap;letter-spacing:-.4px;
+  }
+  .srail b{
+    display:inline-grid;place-items:center;width:19px;height:19px;border-radius:50%;
+    background:#F3E6D9;color:#8C6A4F;font-size:11px;font-weight:900;
+  }
+  .srail i{font-style:normal;color:var(--green);font-size:12px;font-weight:900}
+  .srail em{font-style:normal;font-size:10px;color:var(--muted);font-weight:800}
+  .srail.done b{background:var(--green);color:#fff}
+  .srail:active{background:#FFF4EA}
+  @media(min-width:900px){
+    .steprail{position:sticky;top:50px;z-index:25;backdrop-filter:blur(8px)}
+    section[id^="step"], #finishCard{scroll-margin-top:66px}
+  }
+  @media(min-width:1000px){
+    .workbook{grid-template-columns:repeat(12,minmax(0,1fr));align-items:start}
+    .workbook > section{grid-column:span 12}
+    .workbook .step1{grid-column:span 7}
+    .workbook .step2{grid-column:span 5}
+    .workbook .step4{grid-column:span 7}
+    .workbook .finish{grid-column:span 5}
+    .s3grid{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr) minmax(0,1fr)}
+  }
+  @media(max-width:640px){
+    .glyph{width:78px;height:78px}
+    .tcellno{font-size:9px}
+    .stephead h2{font-size:14px}
+    .panel{padding:10px}
+    .srail{font-size:10px;padding:6px 3px;gap:3px;letter-spacing:-.6px}
+    .srail em{display:none}
+  }
+
   @media(max-width:640px){
     .app{padding:0 12px}
     .top{flex-wrap:wrap;gap:7px}
@@ -569,6 +677,7 @@
 <script src="./data-a.js"></script>
 <script src="./data-b.js"></script>
 <script src="./data-c.js"></script>
+<script src="./data-d.js"></script>
 <script src="./app.js"></script>
 </body>
 </html>

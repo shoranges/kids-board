@@ -1,11 +1,11 @@
 /* 서연·서우 보드 — 오프라인에서도 열리도록 화면을 저장해 둡니다 */
-var CACHE = 'kids-board-v6';
+var CACHE = 'kids-board-v7';
 var ASSETS = [
   './', './index.html', './meals.json', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png',
   './hanja/', './hanja/index.html', './hanja/manifest.json',
   './hanja/seoyeon.html', './hanja/seowoo.html',
   './hanja/manifest-seoyeon.json', './hanja/manifest-seowoo.json',
-  './hanja/data-a.js', './hanja/data-b.js', './hanja/data-c.js', './hanja/app.js',
+  './hanja/data-a.js', './hanja/data-b.js', './hanja/data-c.js', './hanja/data-d.js', './hanja/app.js',
   './hanja/icon-192.png', './hanja/icon-512.png', './hanja/apple-touch-icon.png'
 ];
 

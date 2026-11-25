@@ -29,8 +29,9 @@
   })();
 
   var state = { me: 'seoyeon', data: {}, view: 'today', vocabTag: 'all', vocabQ: '', cal: null };
-  var runtime = { quiz: null, blankTries: {} };
-  var trace = { h: null, strokes: {}, guide: true, ctx: null, cv: null, w: 0, drawing: false, cur: null };
+  var runtime = { quiz: null, review: null, blankTries: {} };
+  /* 2단계 4칸 연습판 — 칸별 획을 me|일차|한자 로 나눠 담아 둡니다. */
+  var trace = { h: null, ink: {}, guide: true, cells: [], drawing: false, cur: null, cell: -1 };
   var VOCAB = [];
   var toastTimer = null;
 
@@ -145,6 +146,7 @@
     var hasTargetSentence = (state.data[p].sentences || []).some(function (s) {
       return s.day === day.day && s.chars && s.chars.length > 0;
     });
+    var traced = (w.trace && typeof w.trace === 'object') ? Object.keys(w.trace).filter(function (h) { return !!w.trace[h]; }) : [];
     return {
       quiz: !!(w.quiz && w.quiz.done),
       quizCorrect: (w.quiz && w.quiz.correct) || 0,
@@ -152,6 +154,11 @@
       stepACount: keys.length,
       stepA: keys.length >= day.chars.length,
       stepB: hasTargetSentence,
+      traceCount: traced.length,
+      traceAll: traced.length >= day.chars.length,
+      review: !!(w.review && w.review.done),
+      reviewCorrect: (w.review && w.review.correct) || 0,
+      reviewTotal: (w.review && w.review.total) || 0,
       total: day.chars.length
     };
   }
@@ -217,12 +224,53 @@
     var p = state.me, day = dayNow();
     if (!day) { $('#view-today').innerHTML = '<div class="card">학습 자료를 불러오지 못했어요.</div>'; return; }
     var rec = state.data[p].done[day.day];
-    $('#view-today').innerHTML = dayHead(day, rec) +
-      '<div class="today-grid">' + charsSection(day) + traceSection(day) + quizSection(day) +
-      stepASection(day) + stepBSection(day) + finishSection(day) + '</div>';
+    var st = dayStatus(p, day);
+    $('#view-today').innerHTML = dayHead(day, rec) + stepRail(day, st) +
+      '<div class="workbook">' + step1Section(day) + step2Section(day) + step3Section(day) +
+      step4Section(day) + finishSection(day) + '</div>';
     if (trace.h && day.chars.indexOf(trace.h) < 0) trace.h = null;
     getTraceChar(day);
-    setupCanvas();
+    setupTrace();
+  }
+
+  /* ---------- 단계 머리말·안내 레일 ---------- */
+  function stepHead(n, title, hint) {
+    return '<div class="stephead"><span class="stepno">' + n + '단계</span><div>' +
+      '<h2>' + esc(title) + '</h2>' + (hint ? '<p>' + esc(hint) + '</p>' : '') + '</div></div>';
+  }
+  function stepRail(day, st) {
+    var items = [
+      { n: 1, label: '원리·어휘', done: true, note: day.chars.length + '자' },
+      { n: 2, label: '4칸 쓰기', done: st.traceAll, note: st.traceCount + '/' + st.total },
+      { n: 3, label: '퀴즈·주관식', done: !!(st.quiz && st.stepA && st.stepB), note: st.quiz && st.stepA && st.stepB ? '완료' : '' },
+      { n: 4, label: '누적 복습', done: st.review, note: st.review ? st.reviewCorrect + '/' + st.reviewTotal : '' }
+    ];
+    return '<nav class="steprail" id="stepRail" aria-label="오늘 학습 4단계">' + items.map(function (it) {
+      return '<a class="srail' + (it.done ? ' done' : '') + '" href="#step' + it.n + '">' +
+        '<b>' + it.n + '</b><span>' + it.label + '</span>' +
+        (it.n === 1 ? '<em>' + it.note + '</em>' : (it.done ? '<i>✓</i>' : '<em>' + it.note + '</em>')) + '</a>';
+    }).join('') + '</nav>';
+  }
+  function updateStepRail(day) {
+    var rail = $('#stepRail');
+    if (!rail || !day) return;
+    rail.outerHTML = stepRail(day, dayStatus(state.me, day));
+  }
+  function step1Section(day) {
+    return '<section class="card step1" id="step1">' +
+      stepHead(1, '원리 & 어휘', '한자가 어떻게 만들어졌는지 이야기로 읽고, 사회·과학 어휘까지 소리로 들어요.') +
+      charsSection(day) + '</section>';
+  }
+  function step2Section(day) {
+    return '<section class="card step2 trace" id="step2">' + traceSection(day) + '</section>';
+  }
+  function step3Section(day) {
+    return '<section class="card step3" id="step3">' +
+      stepHead(3, '단어·문장 퀴즈 & 주관식', '뜻·음 → 단어 속 한자 → 문장 빈칸 → 내 문장 만들기 순서로 풀어요.') +
+      '<div class="s3grid">' + quizSection(day) + stepASection(day) + stepBSection(day) + '</div></section>';
+  }
+  function step4Section(day) {
+    return '<section class="card step4" id="step4">' + reviewSection(day) + '</section>';
   }
 
   function dayHead(day, rec) {
@@ -260,58 +308,92 @@
       '<div class="c-info"><p class="c-read"><span class="hun">' + esc(c.hun) + '</span><b>' + esc(c.eum) + '</b>' +
       '<button type="button" class="csay" data-act="say" data-say="' + esc(c.hun + ' ' + c.eum) + '" aria-label="' + esc(c.hun + ' ' + c.eum) + ' 발음 듣기">🔊 듣기</button></p>' +
       '<p class="c-meta">' + c.strokes + '획 · 부수 ' + esc(c.busu) + '</p>' +
-      '<p class="c-hint">' + esc(c.hint) + '</p></div></div>' +
+      '<p class="c-hint">💡 ' + esc(c.hint) + '</p></div></div>' +
+      (c.origin ? '<div class="origin"><span class="otype">' + esc(c.origin.type) + '</span>' +
+        '<p class="ostory">' + esc(c.origin.story) + '</p></div>' : '') +
       '<div class="c-words">' + words + '</div></article>';
   }
   function charsSection(day) {
     return '<div class="chars">' + day.chars.map(function (h) { return CHARS[h] ? charCard(CHARS[h]) : ''; }).join('') + '</div>';
   }
 
-  /* ---------- 따라쓰기 ---------- */
+  /* ---------- 2단계: 4칸 반복 덧쓰기 (구몬 스타일) ---------- */
   function getTraceChar(day) {
     if (!trace.h || day.chars.indexOf(trace.h) < 0) trace.h = day.chars[0];
     return trace.h;
+  }
+  function inkKey(h) { return state.me + '|' + currentDay(state.me) + '|' + h; }
+  function inkOf(h) {
+    var k = inkKey(h);
+    if (!trace.ink[k]) trace.ink[k] = [[], [], [], []];
+    return trace.ink[k];
+  }
+  function inkCount(h) {
+    var a = inkOf(h), n = 0;
+    for (var i = 0; i < 4; i++) if (a[i] && a[i].length) n++;
+    return n;
   }
   function traceSection(day) {
     var h = getTraceChar(day);
     var chips = day.chars.map(function (x) {
       return '<button type="button" data-act="trace-char" data-h="' + x + '" class="hanja' + (x === h ? ' on' : '') + '">' + x + '</button>';
     }).join('');
-    return '<section class="card trace" id="traceCard">' +
-      '<div class="chead"><h2>✍️ 따라쓰기</h2><div class="tchips" id="traceChips">' + chips + '</div></div>' +
-      '<div class="canvas-wrap"><canvas id="traceCanvas" aria-label="' + esc(h) + ' 따라쓰기 칸"></canvas></div>' +
-      '<p class="canvas-tip">연한 글씨 위에 손가락으로 따라 써 보세요.</p>' +
+    var names = ['따라쓰기', '따라쓰기', '흐린 가이드', '혼자쓰기'];
+    var cells = [0, 1, 2, 3].map(function (i) {
+      return '<div class="tcellwrap" data-cell="' + i + '">' +
+        '<canvas class="tcell" data-cell="' + i + '" aria-label="' + esc(h) + ' ' + names[i] + ' 칸"></canvas>' +
+        '<span class="tcellno">' + '①②③④'.charAt(i) + ' ' + names[i] + '</span>' +
+        '<button type="button" class="tcellclear" data-act="cell-clear" data-cell="' + i + '" aria-label="' + names[i] + ' 칸 지우기">🧽</button>' +
+        '</div>';
+    }).join('');
+    return stepHead(2, '4칸 반복 덧쓰기', '①②는 연한 글씨를 따라 쓰고, ③④는 혼자 써 보세요. 4칸을 다 채우면 배지가 켜져요.') +
+      '<div class="chead tchead"><div class="tchips" id="traceChips">' + chips + '</div>' +
+      '<span class="tracebadge" id="traceBadge">4칸 중 0칸</span></div>' +
+      '<div class="cells" id="traceCells">' + cells + '</div>' +
       '<div class="tools">' +
-      '<button type="button" data-act="trace-clear">🧽 지우기</button>' +
+      '<button type="button" data-act="trace-clear">🧽 전체 지우기</button>' +
       '<button type="button" data-act="trace-guide" aria-pressed="true" id="guideBtn">👀 가이드 켬</button>' +
       '<button type="button" class="narrow" data-act="trace-prev" aria-label="이전 한자">←</button>' +
       '<button type="button" class="narrow" data-act="trace-next" aria-label="다음 한자">→</button>' +
-      '</div></section>';
+      '</div>';
   }
-  function setupCanvas() {
-    var cv = document.getElementById('traceCanvas');
-    if (!cv || cv.offsetParent === null) return;
-    var wrap = cv.parentElement;
-    var avail = wrap.clientWidth || 320;
-    var size = Math.max(220, Math.min(avail, 360));
+  function cellByIndex(i) {
+    for (var k = 0; k < trace.cells.length; k++) if (trace.cells[k].idx === i) return trace.cells[k];
+    return null;
+  }
+  function setupTrace() {
+    var wraps = $$('#traceCells .tcellwrap');
+    if (!wraps.length) return;
+    trace.cells = [];
     var dpr = Math.min(window.devicePixelRatio || 1, 3);
-    cv.width = Math.round(size * dpr);
-    cv.height = Math.round(size * dpr);
-    cv.style.width = size + 'px';
-    cv.style.height = size + 'px';
-    var ctx = cv.getContext('2d');
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    trace.cv = cv; trace.ctx = ctx; trace.w = size;
-    cv.addEventListener('pointerdown', onDown);
-    cv.addEventListener('pointermove', onMove);
-    cv.addEventListener('pointerup', onUp);
-    cv.addEventListener('pointercancel', onUp);
-    cv.addEventListener('pointerleave', function (e) { if (trace.drawing) onUp(e); });
-    redrawTrace();
+    wraps.forEach(function (wrap) {
+      var cv = wrap.querySelector('canvas');
+      if (!cv) return;
+      var size = Math.max(96, Math.round(wrap.clientWidth || 150));
+      cv.width = Math.round(size * dpr);
+      cv.height = Math.round(size * dpr);
+      var ctx = cv.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      trace.cells.push({ cv: cv, ctx: ctx, size: size, idx: +cv.getAttribute('data-cell') });
+      if (!cv.__bound) {
+        cv.__bound = true;
+        cv.addEventListener('pointerdown', function (e) {
+          var cell = cellByIndex(+cv.getAttribute('data-cell'));
+          if (cell) startStroke(e, cell);
+        });
+        cv.addEventListener('pointermove', moveStroke);
+        cv.addEventListener('pointerup', endStroke);
+        cv.addEventListener('pointercancel', endStroke);
+        cv.addEventListener('pointerleave', function (e) {
+          if (trace.drawing && trace.cell === +cv.getAttribute('data-cell')) endStroke(e);
+        });
+      }
+    });
+    redrawCells();
+    updateTraceBadge();
   }
-  function redrawTrace() {
-    var ctx = trace.ctx; if (!ctx) return;
-    var s = trace.w;
+  function drawCell(cell) {
+    var s = cell.size, ctx = cell.ctx;
     ctx.clearRect(0, 0, s, s);
     ctx.fillStyle = '#FFFDF8'; ctx.fillRect(0, 0, s, s);
     ctx.strokeStyle = '#E7D3C0'; ctx.lineWidth = 1.5; ctx.strokeRect(1, 1, s - 2, s - 2);
@@ -321,22 +403,23 @@
     ctx.setLineDash([2, 8]); ctx.strokeStyle = '#F3DFD0';
     ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(s, s); ctx.moveTo(s, 0); ctx.lineTo(0, s); ctx.stroke();
     ctx.restore();
-    if (trace.guide && trace.h) {
+    var alpha = cell.idx < 2 ? 0.16 : (cell.idx === 2 ? 0.06 : 0);
+    if (trace.guide && trace.h && alpha > 0) {
       ctx.save();
-      ctx.fillStyle = 'rgba(120,88,64,.13)';
+      ctx.fillStyle = 'rgba(120,88,64,' + alpha + ')';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.font = '700 ' + Math.round(s * 0.74) + 'px "Nanum Myeongjo","Noto Serif KR","Batang",serif';
       ctx.fillText(trace.h, s / 2, s * 0.53);
       ctx.restore();
     }
-    ctx.strokeStyle = '#3E2E24';
-    ctx.lineWidth = Math.max(6, s * 0.045);
+    var strokes = (trace.h && inkOf(trace.h)[cell.idx]) || [];
+    ctx.strokeStyle = '#3E2E24'; ctx.fillStyle = '#3E2E24';
+    ctx.lineWidth = Math.max(4, s * 0.045);
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    var strokes = trace.strokes[trace.h] || [];
     strokes.forEach(function (st) {
       if (!st.length) return;
       if (st.length === 1) {
-        ctx.beginPath(); ctx.arc(st[0].x, st[0].y, ctx.lineWidth / 2, 0, Math.PI * 2); ctx.fillStyle = '#3E2E24'; ctx.fill();
+        ctx.beginPath(); ctx.arc(st[0].x, st[0].y, ctx.lineWidth / 2, 0, Math.PI * 2); ctx.fill();
         return;
       }
       ctx.beginPath(); ctx.moveTo(st[0].x, st[0].y);
@@ -344,37 +427,92 @@
       ctx.stroke();
     });
   }
-  function tracePoint(e) {
-    var r = trace.cv.getBoundingClientRect();
-    return { x: (e.clientX - r.left) * (trace.w / r.width), y: (e.clientY - r.top) * (trace.w / r.height) };
+  function redrawCells() { trace.cells.forEach(drawCell); }
+  function tracePoint(cell, e) {
+    var r = cell.cv.getBoundingClientRect();
+    return { x: (e.clientX - r.left) * (cell.size / r.width), y: (e.clientY - r.top) * (cell.size / r.height) };
   }
-  function onDown(e) {
-    if (!trace.cv || !trace.h) return;
+  function startStroke(e, cell) {
+    if (!trace.h) return;
     e.preventDefault();
     trace.drawing = true;
-    try { trace.cv.setPointerCapture(e.pointerId); } catch (err) {}
-    var p = tracePoint(e);
+    trace.cell = cell.idx;
+    try { cell.cv.setPointerCapture(e.pointerId); } catch (err) {}
+    var p = tracePoint(cell, e);
     trace.cur = [p];
-    (trace.strokes[trace.h] = trace.strokes[trace.h] || []).push(trace.cur);
-    var ctx = trace.ctx;
+    inkOf(trace.h)[cell.idx].push(trace.cur);
+    var ctx = cell.ctx;
     ctx.fillStyle = '#3E2E24';
-    ctx.beginPath(); ctx.arc(p.x, p.y, ctx.lineWidth / 2, 0, Math.PI * 2); ctx.fill();
+    ctx.lineWidth = Math.max(4, cell.size * 0.045);
+    ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(2, ctx.lineWidth / 2), 0, Math.PI * 2); ctx.fill();
   }
-  function onMove(e) {
+  function moveStroke(e) {
     if (!trace.drawing || !trace.cur) return;
+    var cell = cellByIndex(trace.cell);
+    if (!cell) return;
     e.preventDefault();
-    var p = tracePoint(e), prev = trace.cur[trace.cur.length - 1];
+    var p = tracePoint(cell, e), prev = trace.cur[trace.cur.length - 1];
     if (Math.abs(prev.x - p.x) + Math.abs(prev.y - p.y) < 0.7) return;
     trace.cur.push(p);
-    var ctx = trace.ctx;
+    var ctx = cell.ctx;
     ctx.beginPath(); ctx.moveTo(prev.x, prev.y); ctx.lineTo(p.x, p.y); ctx.stroke();
   }
-  function onUp() { trace.drawing = false; trace.cur = null; }
+  function endStroke() {
+    if (!trace.drawing) return;
+    trace.drawing = false; trace.cur = null;
+    updateTraceBadge();
+  }
+  function updateTraceBadge() {
+    var day = dayNow();
+    if (!day || !trace.h) return;
+    var h = trace.h, n = inkCount(h);
+    var badge = $('#traceBadge');
+    if (badge) {
+      badge.textContent = n === 4 ? '✅ 4칸 완성 · 쓰기 배지' : '4칸 중 ' + n + '칸 썼어요';
+      badge.classList.toggle('on', n === 4);
+    }
+    var firstEmpty = -1;
+    for (var i = 0; i < 4; i++) if (!(inkOf(h)[i] || []).length) { firstEmpty = i; break; }
+    $$('#traceCells .tcellwrap').forEach(function (w) {
+      var idx = +w.getAttribute('data-cell');
+      w.classList.toggle('inked', (inkOf(h)[idx] || []).length > 0);
+      w.classList.toggle('next', idx === firstEmpty);
+    });
+    var rec = work(day.day);
+    rec.trace = rec.trace || {};
+    var before = !!rec.trace[h];
+    if (n === 4) {
+      rec.trace[h] = true;
+      if (!before) { save(state.me); toast(h + ' 4칸 완성! 쓰기 배지를 받았어요.'); }
+    } else if (before) {
+      delete rec.trace[h];
+      save(state.me);
+    }
+    updateStepRail(day);
+    updateFinish(day);
+  }
+  function clearCell(i) {
+    if (!trace.h) return;
+    inkOf(trace.h)[i] = [];
+    redrawCells();
+    updateTraceBadge();
+  }
+  function clearTrace() {
+    if (!trace.h) return;
+    trace.ink[inkKey(trace.h)] = [[], [], [], []];
+    redrawCells();
+    updateTraceBadge();
+    toast(trace.h + ' 4칸을 모두 지웠어요.');
+  }
   function setTraceChar(h) {
     trace.h = h;
     $$('#traceChips button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-h') === h); });
-    var cv = document.getElementById('traceCanvas'); if (cv) cv.setAttribute('aria-label', h + ' 따라쓰기 칸');
-    redrawTrace();
+    var names = ['따라쓰기', '따라쓰기', '흐린 가이드', '혼자쓰기'];
+    $$('#traceCells canvas').forEach(function (cv) {
+      cv.setAttribute('aria-label', h + ' ' + names[+cv.getAttribute('data-cell')] + ' 칸');
+    });
+    redrawCells();
+    updateTraceBadge();
   }
   function moveTrace(dir) {
     var day = dayNow(); if (!day) return;
@@ -384,7 +522,7 @@
     setTraceChar(day.chars[i]);
   }
 
-  /* ---------- 퀴즈 ---------- */
+  /* ---------- 3단계: 확인 퀴즈 · 4단계: 누적 복습 ---------- */
   function allPools() {
     var e = [], hun = [], h = [], r = [], m = [];
     DAYS.forEach(function (d) {
@@ -411,46 +549,101 @@
     var tagged = c.words.filter(function (w) { return !!w.tag; });
     return (tagged[0] || c.words[0] || null);
   }
-  function buildQuiz(day) {
-    var pools = allPools(), pool = [];
-    day.chars.forEach(function (h) {
-      var c = CHARS[h]; if (!c) return;
-      pool.push({ kind: 'eum', label: '음(소리) 맞히기', text: '이 한자의 음은 무엇일까요?', big: c.h, answer: c.eum, options: opts4(c.eum, pools.eum) });
-      if (Math.random() < 0.5) {
-        pool.push({ kind: 'hun', label: '뜻(훈) 맞히기', text: '이 한자의 뜻은 무엇일까요?', big: c.h, answer: c.hun, options: opts4(c.hun, pools.hun) });
-      } else {
-        pool.push({ kind: 'hanja', label: '한자 고르기', text: '다음 뜻과 음에 맞는 한자를 고르세요.', sub: c.hun + ' ' + c.eum, answer: c.h, options: opts4(c.h, pools.hanja) });
-      }
-      var w = pickWord(c);
-      if (w) {
-        pool.push({ kind: 'read', label: '한자어 읽기', text: '이 한자어를 어떻게 읽을까요?', big: w.w, answer: w.r, options: opts4(w.r, pools.read) });
-        if (w.tag) pool.push({ kind: 'mean', label: w.tag + ' 어휘 뜻', text: '‘' + w.w + '(' + w.r + ')’의 뜻으로 알맞은 것은?', answer: w.mean, options: opts4(w.mean, pools.mean) });
-      }
+  function qEum(c, pools) {
+    return { kind: 'eum', label: '뜻·음 맞추기 · 음(소리)', text: '이 한자의 음은 무엇일까요?', big: c.h, answer: c.eum, options: opts4(c.eum, pools.eum) };
+  }
+  function qHun(c, pools) {
+    return { kind: 'hun', label: '뜻·음 맞추기 · 뜻(훈)', text: '이 한자의 뜻은 무엇일까요?', big: c.h, answer: c.hun, options: opts4(c.hun, pools.hun) };
+  }
+  function qHanja(c, pools) {
+    return { kind: 'hanja', label: '뜻·음 맞추기 · 한자 고르기', text: '다음 뜻과 음에 맞는 한자를 고르세요.', sub: c.hun + ' ' + c.eum, answer: c.h, options: opts4(c.h, pools.hanja) };
+  }
+  function qRead(c, pools) {
+    var w = pickWord(c); if (!w) return null;
+    return { kind: 'read', label: '한자어 읽기', text: '이 한자어를 어떻게 읽을까요?', big: w.w, answer: w.r, options: opts4(w.r, pools.read) };
+  }
+  function qMean(c, pools) {
+    var w = c.words.filter(function (x) { return !!x.tag; })[0] || pickWord(c);
+    if (!w) return null;
+    return { kind: 'mean', label: (w.tag || '교과') + ' 어휘 뜻', text: '‘' + w.w + '(' + w.r + ')’의 뜻으로 알맞은 것은?', answer: w.mean, options: opts4(w.mean, pools.mean) };
+  }
+  /* 단어 속 빈칸에 들어갈 한자 고르기 — 예: ‘화산’ → ○山 */
+  var HANJA_VAR = { '產': '産', '産': '產' };  /* 生産처럼 자형이 다른 경우도 같은 글자로 봅니다. */
+  function wordHasChar(w, h) {
+    if (w.indexOf(h) >= 0) return h;
+    var v = HANJA_VAR[h];
+    if (v && w.indexOf(v) >= 0) return v;
+    return null;
+  }
+  function qWordHanja(c, pools) {
+    var cands = c.words.filter(function (w) { return w.w.length >= 2 && wordHasChar(w.w, c.h); });
+    if (!cands.length) return null;
+    var w = pickOne(cands);
+    var found = wordHasChar(w.w, c.h);
+    var masked = w.w.replace(found, '○');
+    return {
+      kind: 'word', label: '단어 속 한자 맞추기',
+      text: '‘' + w.r + '’을 한자로 쓰면 ' + masked + '이에요. ○에 들어갈 한자는?',
+      big: masked, sub: w.mean + (w.tag ? ' · ' + w.tag : ''),
+      answer: c.h, options: opts4(c.h, pools.hanja)
+    };
+  }
+  function dedupeQ(list) {
+    var seen = {}, out = [];
+    list.forEach(function (q) {
+      if (!q) return;
+      var k = q.text + '|' + q.answer;
+      if (seen[k]) return;
+      seen[k] = 1; out.push(q);
     });
-    return shuffle(pool).slice(0, 6);
+    return out;
+  }
+  function buildQuiz(day) {
+    var pools = allPools(), eums = [], words = [], others = [];
+    day.chars.forEach(function (h, i) {
+      var c = CHARS[h]; if (!c) return;
+      eums.push(qEum(c, pools));
+      var wq = qWordHanja(c, pools); if (wq) words.push(wq);
+      if (i % 2 === 0) others.push(qHun(c, pools));
+      else { var r = qRead(c, pools); if (r) others.push(r); }
+    });
+    var tagged = null;
+    day.chars.forEach(function (h) {
+      var c = CHARS[h]; if (!c || tagged) return;
+      var w = c.words.filter(function (x) { return !!x.tag; })[0];
+      if (w) tagged = qMean(c, pools);
+    });
+    if (tagged) others.push(tagged);
+    eums = shuffle(dedupeQ(eums)); words = shuffle(dedupeQ(words)); others = shuffle(dedupeQ(others));
+    var core = [];
+    if (words.length) core.push(words.shift());
+    if (eums.length) core.push(eums.shift());
+    var rest = shuffle(eums.concat(words).concat(others));
+    return shuffle(core.concat(rest.slice(0, Math.max(0, 6 - core.length)))).slice(0, 6);
+  }
+  function makeQState(key, qs) {
+    return { key: key, qs: qs, i: 0, correct: 0, done: false, locked: false, picked: -1, msg: '', msgOk: false };
   }
   function getQuiz(day) {
     var key = state.me + '-' + day.day;
-    if (!runtime.quiz || runtime.quiz.key !== key) {
-      runtime.quiz = { key: key, qs: buildQuiz(day), i: 0, correct: 0, done: false, locked: false, picked: -1, msg: '', msgOk: false };
-    }
+    if (!runtime.quiz || runtime.quiz.key !== key) runtime.quiz = makeQState(key, buildQuiz(day));
     return runtime.quiz;
   }
-  function quizSection(day) {
-    return '<section class="card quiz" id="quizCard">' + quizInner(day) + '</section>';
+  function getReview(day) {
+    var key = state.me + '-r-' + day.day;
+    if (!runtime.review || runtime.review.key !== key) runtime.review = makeQState(key, buildReview(day));
+    return runtime.review;
   }
-  function quizInner(day) {
-    var q = getQuiz(day);
-    var head = '<div class="chead"><h2>🧠 오늘의 확인 퀴즈</h2><span class="pill">' +
-      (q.done ? '완료' : (q.i + 1) + ' / ' + q.qs.length) + '</span></div>';
+  function qBodyHTML(q, prefix) {
+    if (!q.qs.length) return '<p class="emptybox">문제를 만들지 못했어요. 잠시 뒤 다시 열어 주세요.</p>';
     if (q.done) {
       var rate = q.qs.length ? q.correct / q.qs.length : 0;
-      return head + '<div class="qdone"><div class="qscore">' + q.correct + '<small>/ ' + q.qs.length + ' 문제</small></div>' +
-        '<p>' + (rate >= 0.8 ? '아주 훌륭해요! 한자를 제법 잘 알아요.' : rate >= 0.5 ? '좋아요! 틀린 문제는 한자 카드에서 다시 봐요.' : '한 번 더 풀면서 익혀 볼까요?') + '</p>' +
-        '<button type="button" data-act="quiz-restart">한 번 더 풀기</button></div>';
+      return '<div class="qdone"><div class="qscore">' + q.correct + '<small>/ ' + q.qs.length + ' 문제</small></div>' +
+        '<p>' + (rate >= 0.8 ? '아주 훌륭해요! 한자를 제법 잘 알아요.' : rate >= 0.5 ? '좋아요! 틀린 문제는 위 한자 카드에서 다시 봐요.' : '한 번 더 풀면서 익혀 볼까요?') + '</p>' +
+        '<button type="button" data-act="' + prefix + '-restart">한 번 더 풀기</button></div>';
     }
     var cur = q.qs[q.i];
-    if (!cur) return head;
+    if (!cur) return '<p class="emptybox">문제를 만들지 못했어요.</p>';
     var pct = Math.round(((q.i + (q.locked ? 1 : 0)) / q.qs.length) * 100);
     var opts = cur.options.map(function (o, i) {
       var cls = '';
@@ -458,20 +651,99 @@
         if (o === cur.answer) cls = ' ok';
         else if (i === q.picked) cls = ' bad';
       }
-      return '<button type="button" data-act="quiz-opt" data-i="' + i + '"' + (q.locked ? ' disabled' : '') + ' class="' + cls + '">' + esc(o) + '</button>';
+      return '<button type="button" data-act="' + prefix + '-opt" data-i="' + i + '"' + (q.locked ? ' disabled' : '') + ' class="' + cls + '">' + esc(o) + '</button>';
     }).join('');
     var big = '';
-    if (cur.big) big = '<div class="qbig hanja' + (cur.kind === 'read' ? ' word' : '') + '">' + esc(cur.big) + '</div>';
+    if (cur.big) big = '<div class="qbig hanja' + (cur.kind === 'read' || cur.kind === 'word' ? ' word' : '') + '">' + esc(cur.big) + '</div>';
     if (cur.sub) big += '<p class="qsub">' + esc(cur.sub) + '</p>';
+    var src = cur.src ? '<span class="srctag">' + esc(cur.src) + '</span>' : '';
     var msg = q.msg ? '<p class="qmsg ' + (q.msgOk ? 'ok' : 'bad') + '">' + esc(q.msg) + '</p>' : '<p class="qmsg">정답이라고 생각하는 것을 눌러 보세요.</p>';
-    var next = q.locked ? '<button type="button" class="qnext" data-act="quiz-next">' + (q.i + 1 >= q.qs.length ? '결과 보기 →' : '다음 문제 →') + '</button>' : '';
-    return head + '<div class="qbar"><i style="width:' + pct + '%"></i></div>' +
-      '<p class="qtype">' + esc(cur.label) + '</p>' +
+    var next = q.locked ? '<button type="button" class="qnext" data-act="' + prefix + '-next">' + (q.i + 1 >= q.qs.length ? '결과 보기 →' : '다음 문제 →') + '</button>' : '';
+    return '<div class="qbar"><i style="width:' + pct + '%"></i></div>' +
+      '<p class="qtype">' + src + esc(cur.label) + '</p>' +
       '<p class="qtext">' + esc(cur.text) + '</p>' + big +
       '<div class="opts">' + opts + '</div>' + msg + next;
   }
-  function answerQuiz(i) {
-    var day = dayNow(), q = runtime.quiz;
+  function quizHead(day) {
+    var q = getQuiz(day);
+    return '<div class="chead"><h2>🧠 ① 뜻·음·단어 퀴즈</h2><span class="pill">' +
+      (q.done ? '완료' : (q.i + 1) + ' / ' + q.qs.length) + '</span></div>';
+  }
+  function quizSection(day) {
+    return '<div class="panel" id="quizCard">' + quizHead(day) + qBodyHTML(getQuiz(day), 'quiz') + '</div>';
+  }
+  function renderQuizCard(day) {
+    var el = $('#quizCard');
+    if (el) el.innerHTML = quizHead(day) + qBodyHTML(getQuiz(day), 'quiz');
+  }
+  /* 4단계 — 오늘 + 최근 일차를 섞은 누적 복습 */
+  function reviewItems(day) {
+    var prevs = DAYS.filter(function (d) { return d.day < day.day; }).slice(-2);
+    var today = day.chars.map(function (h) { return { h: h, day: day.day }; });
+    var prev = [];
+    prevs.forEach(function (d) { d.chars.forEach(function (h) { prev.push({ h: h, day: d.day }); }); });
+    return { today: today, prev: prev, first: prevs.length === 0 };
+  }
+  function makeQ(item, kind, pools) {
+    var c = CHARS[item.h];
+    if (!c) return null;
+    if (kind === 'eum') return qEum(c, pools);
+    if (kind === 'hun') return qHun(c, pools);
+    if (kind === 'hanja') return qHanja(c, pools);
+    if (kind === 'read') return qRead(c, pools);
+    if (kind === 'mean') return qMean(c, pools);
+    if (kind === 'word') return qWordHanja(c, pools);
+    return null;
+  }
+  function buildReview(day) {
+    var pools = allPools(), it = reviewItems(day);
+    var kinds = ['eum', 'hun', 'word', 'read', 'hanja', 'word'];
+    var qs = [], used = {};
+    function add(item, kind) {
+      if (!item) return false;
+      var q = makeQ(item, kind, pools);
+      if (!q) return false;
+      var k = q.text + '|' + q.answer;
+      if (used[k]) return false;
+      used[k] = 1;
+      q.src = item.day === day.day ? '오늘' : (day.day - item.day) + '일 전';
+      qs.push(q);
+      return true;
+    }
+    var want = it.first ? 4 : 6;
+    var wantToday = it.first ? 4 : 3;
+    var g = 0, nToday = 0;
+    while (nToday < wantToday && g++ < 80) {
+      if (add(pickOne(it.today), pickOne(kinds))) nToday++;
+    }
+    g = 0;
+    while (qs.length < want && g++ < 120) {
+      add(pickOne(it.prev.length ? it.prev : it.today), pickOne(kinds));
+    }
+    return shuffle(qs).slice(0, want);
+  }
+  function reviewHead(day) {
+    var q = getReview(day), it = reviewItems(day);
+    return stepHead(4, '누적 복습 체크업',
+      it.first
+        ? '첫날이라 오늘 배운 한자로 4문제를 풀어요. 배운 글자를 잊지 않게 한 번 더!'
+        : '오늘 배운 한자 + 최근 ' + (it.prev.length ? '2일' : '1일') + '에 배운 한자를 섞어 ' + q.qs.length + '문제를 풀어요.') +
+      '<div class="chead"><h2>🔁 ' + (it.first ? '오늘 한자 복습' : '오늘 + 지난 한자 복습') + '</h2><span class="pill">' +
+      (q.done ? '완료' : (q.i + 1) + ' / ' + q.qs.length) + '</span></div>';
+  }
+  function reviewSection(day) {
+    return reviewHead(day) + '<div class="panel" id="reviewCard">' + qBodyHTML(getReview(day), 'review') + '</div>';
+  }
+  function renderReviewCard(day) {
+    var el = $('#reviewCard');
+    if (el) el.innerHTML = qBodyHTML(getReview(day), 'review');
+    var head = $('#step4 .chead .pill');
+    var q = getReview(day);
+    if (head) head.textContent = q.done ? '완료' : (q.i + 1) + ' / ' + q.qs.length;
+  }
+  function activeQ(prefix) { return prefix === 'review' ? runtime.review : runtime.quiz; }
+  function answerQ(prefix, i) {
+    var day = dayNow(), q = activeQ(prefix);
     if (!day || !q || q.done || q.locked) return;
     var cur = q.qs[q.i]; if (!cur) return;
     q.locked = true; q.picked = i;
@@ -480,33 +752,35 @@
     q.msgOk = ok;
     q.msg = ok ? pickOne(['정답이에요! 👏', '딱 맞았어요!', '아주 잘했어요! 🌟']) :
       '아쉬워요. 정답은 ‘' + cur.answer + '’이에요.';
-    renderQuizCard(day);
-    updateFinish(day);
+    renderQ(prefix, day);
   }
-  function nextQuiz() {
-    var day = dayNow(), q = runtime.quiz;
+  function nextQ(prefix) {
+    var day = dayNow(), q = activeQ(prefix);
     if (!day || !q || !q.locked) return;
     q.i++;
     if (q.i >= q.qs.length) {
       q.done = true;
       var w = work(day.day);
-      w.quiz = { done: true, correct: q.correct, total: q.qs.length };
+      if (prefix === 'review') w.review = { done: true, correct: q.correct, total: q.qs.length };
+      else w.quiz = { done: true, correct: q.correct, total: q.qs.length };
       save(state.me);
+      if (prefix === 'review') toast('복습 완료! 배운 한자를 잘 지켰어요.');
     } else {
       q.locked = false; q.picked = -1; q.msg = ''; q.msgOk = false;
     }
-    renderQuizCard(day);
+    renderQ(prefix, day);
     updateFinish(day);
   }
-  function restartQuiz() {
-    runtime.quiz = null;
+  function restartQ(prefix) {
     var day = dayNow(); if (!day) return;
-    renderQuizCard(day);
+    if (prefix === 'review') runtime.review = null; else runtime.quiz = null;
+    renderQ(prefix, day);
     updateFinish(day);
   }
-  function renderQuizCard(day) {
-    var el = $('#quizCard');
-    if (el) el.innerHTML = quizInner(day);
+  function renderQ(prefix, day) {
+    if (prefix === 'review') renderReviewCard(day);
+    else renderQuizCard(day);
+    updateStepRail(day);
   }
 
   /* ---------- Step A: 빈칸 채우기 ---------- */
@@ -546,9 +820,9 @@
       return '<div class="blank' + cls + '" data-i="' + i + '"><p class="bq">' + tag + esc(c.blank.q) + '</p>' +
         '<div class="brow"><input type="text" inputmode="text" autocomplete="off" enterkeyhint="done" placeholder="답을 써 보세요" aria-label="빈칸 답" value="' + val + '"' + disabled + '>' + btn + '</div>' + msg + '</div>';
     }).join('');
-    return '<section class="card stepa"><div class="chead"><h2>📝 문장 속 빈칸 채우기</h2><span class="pill">주관식</span></div>' +
+    return '<div class="panel" id="stepA"><div class="chead"><h2>📝 ② 문장 빈칸 채우기</h2><span class="pill">주관식</span></div>' +
       '<p class="lead">오늘 배운 한자어를 직접 타이핑해 보세요. 한자로 써도 맞아요.</p>' +
-      '<div class="blanks">' + items + '</div></section>';
+      '<div class="blanks">' + items + '</div></div>';
   }
   function checkBlank(i, btn) {
     var day = dayNow(); if (!day) return;
@@ -614,13 +888,13 @@
     }).join('');
     var text = sb.text || '';
     var note = sb.saved ? '<p class="fb-text">지난번에 저장한 문장이에요. 고쳐서 다시 확인할 수 있어요.</p>' : '';
-    return '<section class="card stepb"><div class="chead"><h2>✏️ 한자로 문장 만들기</h2><span class="pill">주관식</span></div>' +
+    return '<div class="panel" id="stepB"><div class="chead"><h2>✏️ ③ 한자로 문장 만들기</h2><span class="pill">주관식</span></div>' +
       '<p class="lead">오늘 배운 한자나 한자어를 넣어 짧은 문장을 만들어 보세요. 단어를 누르면 입력칸에 들어가요.</p>' +
       '<div class="chips"><span class="chiplabel">넣을 말:</span>' + chips + '</div>' +
-      '<textarea id="freeText" rows="4" placeholder="예: 화산이 폭발하면 뜨거운 용암이 흘러나와요." aria-label="내가 만든 문장">' + esc(text) + '</textarea>' +
+      '<textarea id="freeText" rows="3" placeholder="예: 화산이 폭발하면 뜨거운 용암이 흘러나와요." aria-label="내가 만든 문장">' + esc(text) + '</textarea>' +
       '<div class="freefoot"><span id="charCount">' + text.replace(/\s/g, '').length + '자</span>' +
       '<button type="button" data-act="free-submit">문장 확인하기</button></div>' +
-      '<div class="feedback" id="freeFeedback"' + (sb.saved ? '' : ' hidden') + '>' + (sb.saved ? note : '') + '</div></section>';
+      '<div class="feedback" id="freeFeedback"' + (sb.saved ? '' : ' hidden') + '>' + (sb.saved ? note : '') + '</div></div>';
   }
   function insertChip(text) {
     var ta = $('#freeText'); if (!ta) return;
@@ -694,37 +968,42 @@
         '<div class="alreadydone"><div class="bigstamp">참<br>잘했어요</div>' +
         '<p>' + fmtDate(rec.date) + '에 마친 ' + day.day + '일차예요.<br>복습하고 싶으면 위에서 다시 풀어 볼 수 있어요.</p></div>';
     }
-    var all = st.quiz && st.stepA && st.stepB;
+    var all = st.quiz && st.stepA && st.stepB && st.traceAll && st.review;
     var li = function (ok, label, note) {
       return '<li class="' + (ok ? 'ok' : '') + '"><span class="ck">' + (ok ? '✓' : '') + '</span>' + label +
         '<span class="small">' + (note || '') + '</span></li>';
     };
     return '<div class="chead"><h2>🏅 오늘의 도장</h2><span class="pill">⭐ 3개</span></div>' +
       '<ul class="checklist">' +
+      li(st.traceAll, '4칸 반복 덧쓰기', st.traceCount + ' / ' + st.total + '자') +
       li(st.quiz, '확인 퀴즈', st.quiz ? st.quizCorrect + ' / ' + st.quizTotal + ' 정답' : '아직') +
-      li(st.stepA, '빈칸 채우기', st.stepACount + ' / ' + st.total) +
+      li(st.stepA, '문장 빈칸 채우기', st.stepACount + ' / ' + st.total) +
       li(st.stepB, '한자로 문장 만들기', st.stepB ? '저장했어요' : '아직') +
+      li(st.review, '누적 복습', st.review ? st.reviewCorrect + ' / ' + st.reviewTotal : '아직') +
       '</ul>' +
       '<button type="button" class="stampbtn" data-act="stamp"' + (all ? '' : ' disabled') + '>' +
-      (all ? '오늘 학습 마치기 ⭐' : '조금만 더! 남은 학습을 마쳐요') + '</button>' +
-      '<p class="note">퀴즈·빈칸·문장을 모두 마치면 도장과 별 3개를 받아요.</p>';
+      (all ? '오늘 학습 마치기 ⭐' : '조금만 더! 남은 단계를 마쳐요') + '</button>' +
+      '<p class="note">4단계를 모두 마치면 도장과 별 3개를 받아요.</p>';
   }
   function updateFinish(day) {
     var el = $('#finishCard');
     if (el) el.innerHTML = finishInner(day);
+    updateStepRail(day);
   }
   function stampDay() {
     var p = state.me, day = dayNow(); if (!day) return;
     var d = state.data[p];
     if (d.done[day.day]) return;
     var st = dayStatus(p, day);
-    if (!(st.quiz && st.stepA && st.stepB)) {
-      toast('퀴즈·빈칸·문장을 모두 마치면 도장을 받을 수 있어요.');
+    if (!(st.quiz && st.stepA && st.stepB && st.traceAll && st.review)) {
+      toast('4단계를 모두 마치면 도장을 받을 수 있어요.');
       return;
     }
     d.done[day.day] = {
       date: todayStr(), stars: 3,
       quiz: { correct: st.quizCorrect, total: st.quizTotal },
+      review: { correct: st.reviewCorrect, total: st.reviewTotal },
+      trace: st.traceCount,
       stepA: st.stepACount, stepB: true
     };
     // 다음 날짜로 이어서: 바로 다음 일차가 아직이면 그 날, 아니면 남은 첫 일차
@@ -882,6 +1161,7 @@
     state.me = p;
     saveActive();
     runtime.quiz = null;
+    runtime.review = null;
     runtime.blankTries = {};
     trace.h = null;
     renderHeader();
@@ -900,20 +1180,22 @@
       case 'profile': switchProfile(el.getAttribute('data-p')); break;
       case 'say': speak(el.getAttribute('data-say')); break;
       case 'trace-char': setTraceChar(el.getAttribute('data-h')); break;
-      case 'trace-clear':
-        if (trace.h) { trace.strokes[trace.h] = []; redrawTrace(); }
-        break;
+      case 'cell-clear': clearCell(+el.getAttribute('data-cell')); break;
+      case 'trace-clear': clearTrace(); break;
       case 'trace-guide':
         trace.guide = !trace.guide;
         el.setAttribute('aria-pressed', trace.guide ? 'true' : 'false');
         el.textContent = trace.guide ? '👀 가이드 켬' : '🙈 가이드 끔';
-        redrawTrace();
+        redrawCells();
         break;
       case 'trace-prev': moveTrace(-1); break;
       case 'trace-next': moveTrace(1); break;
-      case 'quiz-opt': answerQuiz(+el.getAttribute('data-i')); break;
-      case 'quiz-next': nextQuiz(); break;
-      case 'quiz-restart': restartQuiz(); break;
+      case 'quiz-opt': answerQ('quiz', +el.getAttribute('data-i')); break;
+      case 'quiz-next': nextQ('quiz'); break;
+      case 'quiz-restart': restartQ('quiz'); break;
+      case 'review-opt': answerQ('review', +el.getAttribute('data-i')); break;
+      case 'review-next': nextQ('review'); break;
+      case 'review-restart': restartQ('review'); break;
       case 'blank-check': checkBlank(+el.getAttribute('data-i'), el); break;
       case 'insert': insertChip(el.getAttribute('data-ins')); break;
       case 'free-submit': submitFree(); break;
@@ -932,6 +1214,7 @@
       state.data[state.me].activeDay = n;
       save(state.me);
       runtime.quiz = null;
+      runtime.review = null;
       runtime.blankTries = {};
       trace.h = null;
       renderHeader();
@@ -965,11 +1248,10 @@
 
   function onResize() {
     if (state.view !== 'today') return;
-    var cv = document.getElementById('traceCanvas');
-    if (!cv) return;
-    var wrap = cv.parentElement;
-    var avail = wrap ? wrap.clientWidth : 0;
-    if (avail && Math.abs(Math.min(avail, 360) - trace.w) > 2) setupCanvas();
+    var wrap = $('#traceCells .tcellwrap');
+    if (!wrap || !trace.cells.length) return;
+    var avail = Math.round(wrap.clientWidth || 0);
+    if (avail && Math.abs(avail - trace.cells[0].size) > 2) setupTrace();
   }
 
   /* ---------- 전용 화면 표시 ---------- */
