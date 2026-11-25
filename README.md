@@ -13,6 +13,8 @@ GitHub Pages로 열리는 정적 페이지이며, 설치형 앱처럼 홈 화면
 - **급식**: 함박초등학교 점심 급식표를 이번 주·다음 주(월~금)로 넘겨 봅니다. 알레르기 번호 토글.
 - **숙제**: 아이별 체크리스트.
 - **매일 한자** (`hanja/`): 서연·서우가 함께 쓰는 구몬한자 스타일 학습 앱. 8급 기초 50자 → 7급 기초 → 교과서 사회·과학 한자까지 37일(110자) 커리큘럼, 아이별 진도·출석 달력·별·내 문장 저장, 따라쓰기 캔버스, 확인 퀴즈, 빈칸·문장 만들기 주관식. 상단 `漢 한자` 탭이나 홈 보드의 `매일 한자` 카드로 엽니다.
+  - **태블릿별 전용 화면**: `hanja/seoyeon.html`(서연 고정) · `hanja/seowoo.html`(서우 고정). 각자 태블릿에서 이 주소를 열어 홈 화면에 추가하면 그 아이 화면만 열리고, 상단 전환 스위치 대신 이름 배지만 보입니다. 공용 화면(`hanja/`)에는 두 전용 화면 바로가기가 있고, 보드 홈 `매일 한자` 카드 아래에도 `서연 한자`·`서우 한자` 링크가 있습니다.
+  - `hanja/seoyeon.html`·`seowoo.html`은 `hanja/index.html`에서 `tools/build-profiles.py`로 만들어 냅니다. 화면을 고칠 때는 `hanja/index.html`·`app.js`를 고친 뒤 `python3 tools/build-profiles.py`를 다시 돌려 주세요(전용 페이지에 직접 쓰면 다음 생성 때 덮어써집니다).
 - **편집**: 공부 목록을 아이·요일별로 추가·수정·삭제·기본값 복원. 홈 카드의 `✏️ 목록 수정`을 눌러도 같은 편집기가 열립니다. 시간표 백업(JSON)·불러오기·초기화도 여기서 합니다.
 
 공부 목록 기본값은 서연(매일): 학교숙제·영어숙제·수학숙제·한글책 읽기·리딩게이트,
@@ -25,6 +27,10 @@ GitHub Pages로 열리는 정적 페이지이며, 설치형 앱처럼 홈 화면
 
 - `index.html` — 화면과 동작 전체
 - `hanja/` — 매일 한자 학습 앱 (`index.html`, `app.js`, `data-a.js`·`data-b.js`·`data-c.js` 커리큘럼, `manifest.json`)
+  - `seoyeon.html`·`manifest-seoyeon.json` — 서연 전용 화면·앱 정보
+  - `seowoo.html`·`manifest-seowoo.json` — 서우 전용 화면·앱 정보
+
+- `tools/build-profiles.py` — `hanja/index.html`에서 서연·서우 전용 페이지를 만드는 스크립트
 - `meals.json` — 함박초 급식표(이번 달 + 다음 달, 중식). 없거나 비어 있으면 화면이 NEIS에서 직접 받아 옵니다.
 - `manifest.json`, `sw.js`, `icon*.png`, `apple-touch-icon.png` — 홈 화면 추가 및 오프라인용 (`sw.js`의 `CACHE` 버전을 올리면 설치된 기기도 새 화면을 받습니다)
 - `tools/make-icons.py` — 아이콘 생성 스크립트
