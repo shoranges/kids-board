@@ -65,6 +65,37 @@
   .who button[data-p="seowoo"]{--c:#6FA9D6}
   .who button.on{background:var(--pc);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.08)}
   .who button.on .dot{background:#fff}
+  /* 전용 화면(서연/서우)에서는 전환 스위치 대신 내 이름 배지만 보입니다. */
+  .who.locked{padding:4px 5px}
+  .who .pole{
+    display:flex;align-items:center;gap:6px;background:var(--pc);color:#fff;
+    font-size:13px;font-weight:900;padding:7px 13px;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.08);
+    white-space:nowrap;
+  }
+  .who .pole .dot{width:8px;height:8px;border-radius:50%;background:#fff}
+
+  /* 공용 화면에서만 보이는 전용 화면 바로가기 */
+  .modes{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 10px;font-size:11.5px;font-weight:800;color:var(--muted)}
+  .modes .mlabel{margin-right:2px}
+  .modes .mlink{
+    display:inline-flex;align-items:center;gap:5px;text-decoration:none;border-radius:999px;
+    padding:6px 11px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);font-weight:900;
+  }
+  .modes .mlink .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+  .modes .mlink.seoyeon{color:#B4562F;border-color:#F3D2B8;background:#FFF7EE}
+  .modes .mlink.seowoo{color:#2F6389;border-color:#C6DDF2;background:#F1F8FF}
+
+  /* 서우 전용 화면은 하늘색 느낌으로 살짝 구분합니다. */
+  html[data-child="seowoo"] body{
+    background:
+      radial-gradient(120% 55% at 50% 0%, #EAF3FC 0%, rgba(234,243,252,0) 65%),
+      repeating-linear-gradient(0deg, rgba(150,180,205,.05) 0 1px, transparent 1px 30px),
+      var(--bg);
+  }
+  html[data-child="seowoo"] .mark{
+    background:linear-gradient(145deg,#E3EFFB,#A9CBEA);color:#2F5F84;
+    box-shadow:0 4px 12px rgba(90,150,200,.25);
+  }
 
   /* stats */
   .stats{display:flex;gap:8px;margin:2px 0 10px;flex-wrap:wrap}
@@ -467,6 +498,12 @@
     <div class="stat"><span class="si" aria-hidden="true">🔥</span><b id="statStreak">0</b><span>연속</span></div>
     <div class="stat"><span class="si" aria-hidden="true">⭐</span><b id="statStars">0</b><span>별</span></div>
     <div class="stat"><span class="si" aria-hidden="true">📅</span><b id="statDays">0</b><span>일 마침</span></div>
+  </div>
+
+  <div class="modes" id="modeLinks" hidden>
+    <span class="mlabel">태블릿별 전용 화면</span>
+    <a class="mlink seoyeon" href="./seoyeon.html"><span class="dot" aria-hidden="true"></span>서연 전용</a>
+    <a class="mlink seowoo" href="./seowoo.html"><span class="dot" aria-hidden="true"></span>서우 전용</a>
   </div>
 
   <nav class="tabs" aria-label="매일 한자 보기">

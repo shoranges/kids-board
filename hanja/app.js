@@ -15,6 +15,19 @@
   var STORE = 'hanja.v1.';
   var ACTIVE_KEY = 'hanja.v1.active';
 
+  /* 전용 화면 잠금
+     seoyeon.html / seowoo.html 은 window.HANJA_LOCK 을 먼저 정해 두고,
+     ?child=seoyeon&lock=1 처럼 주소로 열어도 그 아이 화면으로 고정합니다. */
+  var LOCK = (function () {
+    var want = null;
+    try {
+      var q = new URLSearchParams(window.location.search);
+      if (q.get('lock') === '1') want = q.get('child');
+    } catch (e) { want = null; }
+    if (!want) want = window.HANJA_LOCK || null;
+    return (want && PROFILES[want]) ? want : null;
+  })();
+
   var state = { me: 'seoyeon', data: {}, view: 'today', vocabTag: 'all', vocabQ: '', cal: null };
   var runtime = { quiz: null, blankTries: {} };
   var trace = { h: null, strokes: {}, guide: true, ctx: null, cv: null, w: 0, drawing: false, cur: null };
@@ -71,7 +84,11 @@
     };
   }
   function loadAll() {
-    try { state.me = localStorage.getItem(ACTIVE_KEY) === 'seowoo' ? 'seowoo' : 'seoyeon'; } catch (e) { state.me = 'seoyeon'; }
+    if (LOCK) {
+      state.me = LOCK;
+    } else {
+      try { state.me = localStorage.getItem(ACTIVE_KEY) === 'seowoo' ? 'seowoo' : 'seoyeon'; } catch (e) { state.me = 'seoyeon'; }
+    }
     ['seoyeon', 'seowoo'].forEach(function (p) {
       var raw = null;
       try { raw = localStorage.getItem(STORE + p); } catch (e) { raw = null; }
@@ -85,6 +102,7 @@
     catch (e) { toast('이 기기에 저장하지 못했어요. 브라우저 저장 공간을 확인해 주세요.'); }
   }
   function saveActive() {
+    if (LOCK) return; /* 전용 화면은 공용 화면의 '마지막에 본 아이'를 건드리지 않습니다. */
     try { localStorage.setItem(ACTIVE_KEY, state.me); } catch (e) {}
   }
   function work(dayNum) {
@@ -859,6 +877,7 @@
   }
 
   function switchProfile(p) {
+    if (LOCK) { toast(PROFILES[LOCK].name + ' 전용 화면이에요. 다른 아이는 자기 화면에서 열어 주세요.'); return; }
     if (!PROFILES[p] || p === state.me) return;
     state.me = p;
     saveActive();
@@ -953,6 +972,26 @@
     if (avail && Math.abs(Math.min(avail, 360) - trace.w) > 2) setupCanvas();
   }
 
+  /* ---------- 전용 화면 표시 ---------- */
+  function applyLock() {
+    if (!LOCK) {
+      var links = $('#modeLinks');
+      if (links) links.hidden = false;
+      return;
+    }
+    var pr = PROFILES[LOCK];
+    document.documentElement.setAttribute('data-child', LOCK);
+    var who = $('#who');
+    if (who) {
+      who.classList.add('locked');
+      who.setAttribute('aria-label', pr.name + ' 전용 화면');
+      who.innerHTML = '<span class="pole" data-p="' + LOCK + '"><span class="dot" aria-hidden="true"></span>' +
+        pr.name + ' 전용</span>';
+    }
+    var links = $('#modeLinks');
+    if (links) links.hidden = true;
+  }
+
   /* ---------- 시작 ---------- */
   function init() {
     if (!DAYS.length) {
@@ -962,6 +1001,7 @@
     state.cal = { y: new Date().getFullYear(), m: new Date().getMonth() };
     buildVocab();
     loadAll();
+    applyLock();
     $$('.tab').forEach(function (b) {
       b.addEventListener('click', function () { setView(b.getAttribute('data-view')); });
     });
