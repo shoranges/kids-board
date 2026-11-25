@@ -466,10 +466,20 @@
     var day = dayNow();
     if (!day || !trace.h) return;
     var h = trace.h, n = inkCount(h);
+    var rec = work(day.day);
+    rec.trace = rec.trace || {};
+    var saved = !!rec.trace[h];
+    if (n === 4 && !saved) {
+      rec.trace[h] = true;
+      saved = true;
+      save(state.me);
+      toast(h + ' 4칸 완성! 쓰기 배지를 받았어요.');
+    }
     var badge = $('#traceBadge');
     if (badge) {
-      badge.textContent = n === 4 ? '✅ 4칸 완성 · 쓰기 배지' : '4칸 중 ' + n + '칸 썼어요';
-      badge.classList.toggle('on', n === 4);
+      badge.textContent = n === 4 ? '✅ 4칸 완성 · 쓰기 배지'
+        : (saved ? '✅ 쓰기 배지 있음 · 이번엔 ' + n + '칸' : '4칸 중 ' + n + '칸 썼어요');
+      badge.classList.toggle('on', n === 4 || saved);
     }
     var firstEmpty = -1;
     for (var i = 0; i < 4; i++) if (!(inkOf(h)[i] || []).length) { firstEmpty = i; break; }
@@ -478,28 +488,26 @@
       w.classList.toggle('inked', (inkOf(h)[idx] || []).length > 0);
       w.classList.toggle('next', idx === firstEmpty);
     });
-    var rec = work(day.day);
-    rec.trace = rec.trace || {};
-    var before = !!rec.trace[h];
-    if (n === 4) {
-      rec.trace[h] = true;
-      if (!before) { save(state.me); toast(h + ' 4칸 완성! 쓰기 배지를 받았어요.'); }
-    } else if (before) {
-      delete rec.trace[h];
-      save(state.me);
-    }
     updateStepRail(day);
     updateFinish(day);
+  }
+  /* 칸을 지우면 그 글자의 쓰기 배지도 함께 지웁니다(새로고침만으로는 지워지지 않아요). */
+  function dropTraceRecord(h) {
+    var day = dayNow(); if (!day) return;
+    var rec = work(day.day);
+    if (rec.trace && rec.trace[h]) { delete rec.trace[h]; save(state.me); }
   }
   function clearCell(i) {
     if (!trace.h) return;
     inkOf(trace.h)[i] = [];
+    dropTraceRecord(trace.h);
     redrawCells();
     updateTraceBadge();
   }
   function clearTrace() {
     if (!trace.h) return;
     trace.ink[inkKey(trace.h)] = [[], [], [], []];
+    dropTraceRecord(trace.h);
     redrawCells();
     updateTraceBadge();
     toast(trace.h + ' 4칸을 모두 지웠어요.');
