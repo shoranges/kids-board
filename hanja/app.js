@@ -708,7 +708,9 @@
       quiz: { correct: st.quizCorrect, total: st.quizTotal },
       stepA: st.stepACount, stepB: true
     };
-    d.activeDay = firstUnfinished(p);
+    // 다음 날짜로 이어서: 바로 다음 일차가 아직이면 그 날, 아니면 남은 첫 일차
+    if (DAYMAP[day.day + 1] && !d.done[day.day + 1]) d.activeDay = day.day + 1;
+    else d.activeDay = firstUnfinished(p);
     save(p);
     renderHeader();
     showStamp(day);
