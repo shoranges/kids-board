@@ -240,7 +240,7 @@
   .brow{display:flex;gap:6px}
   .brow input{
     flex:1;min-width:0;border:1.5px solid var(--line-2);background:#fff;border-radius:11px;
-    font-family:inherit;font-size:15px;font-weight:800;color:var(--ink);padding:10px 12px;
+    font-family:inherit;font-size:16px;font-weight:800;color:var(--ink);padding:10px 12px;
   }
   .brow input:focus{outline:none;border-color:#F0B79C;background:#FFFDF9}
   .brow input:disabled{background:#F8F4EE;color:var(--ink-soft)}
@@ -267,7 +267,7 @@
   .chips button.tagged.soc{background:var(--blue-soft);border-color:#BBD5EC;color:var(--blue)}
   #freeText{
     width:100%;max-width:100%;min-height:104px;resize:vertical;border:1.5px solid var(--line-2);border-radius:14px;
-    background:#FFFDFA;color:var(--ink);font-family:inherit;font-size:15px;line-height:1.6;padding:12px 13px;
+    background:#FFFDFA;color:var(--ink);font-family:inherit;font-size:16px;line-height:1.6;padding:12px 13px;
   }
   #freeText:focus{outline:none;border-color:#F0B79C;background:#fff}
   .freefoot{display:flex;align-items:center;gap:8px;margin-top:8px}
@@ -350,6 +350,8 @@
   .sent-top .sdate{font-size:11px;font-weight:800;color:var(--muted)}
   .sent-top button{margin-left:auto;border:0;background:transparent;color:var(--muted);font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;padding:4px}
   .stext{margin:8px 0 0;font-size:14.5px;font-weight:700;line-height:1.65;word-break:keep-all}
+  .sent-date{margin:16px 0 8px;font-size:12px;font-weight:900;color:var(--ink-soft)}
+  .sent-date:first-child{margin-top:0}
   .stargets{margin:7px 0 0;font-size:11.5px;font-weight:700;color:var(--muted)}
   .stargets .tag{margin-right:3px}
 
@@ -364,7 +366,7 @@
   }
   .vfilter button.on{background:var(--ink);border-color:var(--ink);color:#fff}
   .vsearch{width:100%;border:1.5px solid var(--line-2);border-radius:12px;background:#fff;padding:10px 12px;
-    font-family:inherit;font-size:13.5px;font-weight:700;color:var(--ink);margin-bottom:10px}
+    font-family:inherit;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:10px}
   .vsearch:focus{outline:none;border-color:#F0B79C}
   .vlist{display:flex;flex-direction:column;gap:0}
   .vrow{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-top:1px dashed var(--line)}
@@ -436,6 +438,7 @@
     .calgrid{gap:3px}
     .calgrid .cell{border-radius:8px;font-size:11px}
     .calgrid .cell .star{font-size:12px}
+    .daysel select{font-size:16px;max-width:150px}
     .vchar{flex-basis:36px;width:36px;height:36px;font-size:20px}
   }
   @media(min-width:1100px){

@@ -225,7 +225,8 @@
       '<div class="dh-chars">' + day.chars.map(function (h) { return '<span class="hanja">' + esc(h) + '</span>'; }).join('') + '</div>' +
       '<div class="dh-progress"><i style="width:' + pct + '%"></i></div>' +
       '<p class="dh-note">' + total + '일 중 ' + count + '일 마쳤어요 · ' + esc(PROFILES[p].name) + '의 오늘 학습</p>' +
-      (rec ? '<p class="done-banner">✅ ' + fmtDate(rec.date) + '에 마친 날이에요 · 다시 복습해도 좋아요</p>' : '') +
+      (count >= total ? '<p class="done-banner">🎉 ' + total + '일 한자를 모두 마쳤어요! 정말 대단해요.</p>' :
+        (rec ? '<p class="done-banner">✅ ' + fmtDate(rec.date) + '에 마친 날이에요 · 다시 복습해도 좋아요</p>' : '')) +
       '</section>';
   }
 
@@ -780,9 +781,11 @@
       $('#sentList').innerHTML = '<p class="emptybox">아직 만든 문장이 없어요.<br>‘오늘 학습’에서 한자로 문장을 만들면 여기에 모여요.</p>';
       return;
     }
+    var lastDate = '';
     $('#sentList').innerHTML = list.map(function (s) {
-      return '<article class="sent"><div class="sent-top"><span class="sday">' + s.day + '일차</span>' +
-        '<span class="sdate">' + fmtDate(s.date) + '</span>' +
+      var head = s.date !== lastDate ? '<p class="sent-date">' + fmtDate(s.date) + '</p>' : '';
+      lastDate = s.date;
+      return head + '<article class="sent"><div class="sent-top"><span class="sday">' + s.day + '일차</span>' +
         '<button type="button" data-act="del-sent" data-id="' + esc(s.id) + '">삭제</button></div>' +
         '<p class="stext">' + esc(s.text) + '</p>' +
         (s.chars && s.chars.length ? '<p class="stargets">넣은 말: ' + esc(s.chars.join(', ')) + '</p>' : '') + '</article>';
