@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>매일 한자 · 서연·서우</title>
+<meta name="description" content="구몬한자 스타일 매일 한자 학습 — 8급부터 7급 기초, 교과서 사회·과학 어휘, 따라쓰기, 문장 만들기">
+<meta name="theme-color" content="#FFF8F2">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="매일 한자">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<style>
+  :root{
+    --bg:#FFF8F2; --bg2:#FFF1E6; --paper:#FFFDF9; --card:#FFFFFF;
+    --ink:#332B25; --ink-soft:#6B5F55; --muted:#A2968A;
+    --line:#F0E2D4; --line-2:#E7D3C0;
+    --accent:#EF8A62; --accent-deep:#C2603F; --accent-soft:#FFE7DB;
+    --green:#3F8F66; --green-soft:#E7F6EC; --blue:#3C6A94; --blue-soft:#E8F1FB;
+    --red:#BD4A42; --red-soft:#FDE9E6; --gold:#D89A28;
+    --shadow:0 2px 14px rgba(170,120,85,.09);
+    --radius:20px;
+    --pc:#EF8A62; --pc-soft:#FFE3D5;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(120% 55% at 50% 0%, #FFF0E2 0%, rgba(255,240,226,0) 65%),
+      repeating-linear-gradient(0deg, rgba(206,168,133,.045) 0 1px, transparent 1px 30px),
+      var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
+    font-size:16px;line-height:1.5;-webkit-text-size-adjust:100%;
+    min-height:100vh;padding-bottom:calc(36px + env(safe-area-inset-bottom));
+  }
+  .app{max-width:1120px;margin:0 auto;padding:0 16px}
+  .hanja{font-family:"Nanum Myeongjo","Noto Serif KR","Noto Serif CJK KR","Batang","Apple SD Gothic Neo",serif;font-weight:700}
+
+  /* header */
+  .top{display:flex;align-items:center;gap:10px;padding:calc(13px + env(safe-area-inset-top)) 0 9px}
+  .back{
+    flex:0 0 auto;text-decoration:none;color:var(--ink-soft);font-size:12.5px;font-weight:800;
+    background:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 12px;box-shadow:var(--shadow);
+  }
+  .back:active{background:#FFF4EA}
+  .brand{display:flex;align-items:center;gap:10px;min-width:0}
+  .mark{
+    font-family:"Nanum Myeongjo","Noto Serif KR","Batang",serif;color:#A9572F;font-size:23px;
+    width:44px;height:44px;border-radius:14px;flex:0 0 auto;display:grid;place-items:center;font-size:22px;
+    background:linear-gradient(145deg,#FFE0CB,#F6AE89);box-shadow:0 4px 12px rgba(239,138,98,.25);
+  }
+  .brand h1{font-size:19px;margin:0;letter-spacing:-.4px;font-weight:900;white-space:nowrap}
+  .brand p{margin:1px 0 0;font-size:12px;color:var(--muted);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .who{display:flex;gap:4px;margin-left:auto;background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px;box-shadow:var(--shadow);flex:0 0 auto}
+  .who button{
+    display:flex;align-items:center;gap:5px;border:0;background:transparent;color:var(--ink-soft);
+    font-family:inherit;font-size:13px;font-weight:800;padding:8px 12px;border-radius:999px;cursor:pointer;transition:.15s;
+  }
+  .who button .dot{width:8px;height:8px;border-radius:50%;background:var(--c,#EF8A62)}
+  .who button[data-p="seoyeon"]{--c:#EF8A62}
+  .who button[data-p="seowoo"]{--c:#6FA9D6}
+  .who button.on{background:var(--pc);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+  .who button.on .dot{background:#fff}
+
+  /* stats */
+  .stats{display:flex;gap:8px;margin:2px 0 10px;flex-wrap:wrap}
+  .stat{
+    display:flex;align-items:baseline;gap:5px;background:#fff;border:1px solid var(--line);
+    border-radius:12px;padding:7px 11px;box-shadow:var(--shadow);font-size:11.5px;color:var(--muted);font-weight:800;
+  }
+  .stat b{font-size:15px;color:var(--ink);font-variant-numeric:tabular-nums}
+  .stat .si{font-size:13px}
+
+  /* tabs */
+  .tabs{
+    position:sticky;top:0;z-index:30;display:flex;gap:4px;padding:6px;margin:0 0 12px;
+    background:rgba(255,248,242,.94);backdrop-filter:blur(10px);
+    border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);
+  }
+  .tab{
+    flex:1;border:0;background:transparent;color:var(--ink-soft);font-family:inherit;
+    font-size:13px;font-weight:800;letter-spacing:-.4px;padding:10px 2px;border-radius:12px;cursor:pointer;white-space:nowrap;
+  }
+  .tab.active{background:#fff;color:var(--ink);box-shadow:0 1px 6px rgba(170,120,85,.15)}
+
+  .view{display:block}
+  [hidden]{display:none !important}
+
+  /* cards */
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:16px;margin:0;
+  }
+  .chead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+  .chead h2{margin:0;font-size:15px;font-weight:900;letter-spacing:-.3px}
+  .pill{font-size:11px;font-weight:800;color:var(--accent-deep);background:var(--accent-soft);padding:3px 9px;border-radius:999px;white-space:nowrap}
+  .lead{margin:0 0 12px;font-size:12.5px;color:var(--muted);font-weight:600;line-height:1.55}
+
+  /* day head */
+  .dayhead{margin-bottom:12px;background:linear-gradient(180deg,#FFFDF9,#FFF7EF)}
+  .dh-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .stagebadge{font-size:11.5px;font-weight:900;color:#fff;background:var(--accent);border-radius:999px;padding:4px 10px}
+  .dh-count{font-size:12px;font-weight:800;color:var(--ink-soft)}
+  .dh-top .daysel{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;color:var(--muted)}
+  .daysel select{
+    font-family:inherit;font-size:12.5px;font-weight:800;color:var(--ink);background:#fff;
+    border:1px solid var(--line-2);border-radius:10px;padding:6px 8px;max-width:170px;
+  }
+  .dh-theme{margin:8px 0 2px;font-size:22px;letter-spacing:-.7px;font-weight:900}
+  .dh-tip{margin:0;font-size:12.5px;color:var(--ink-soft);font-weight:700}
+  .dh-chars{display:flex;gap:8px;margin:10px 0 0;flex-wrap:wrap}
+  .dh-chars span{
+    font-size:25px;line-height:1.15;padding:2px 12px;border-radius:12px;
+    background:#fff;border:1px solid var(--line);color:var(--ink);
+  }
+  .dh-progress{height:8px;border-radius:99px;background:#F3E6D9;overflow:hidden;margin-top:12px}
+  .dh-progress i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#FFC7AC,var(--accent));transition:width .4s}
+  .dh-note{margin:7px 0 0;font-size:11.5px;font-weight:700;color:var(--muted)}
+  .done-banner{
+    margin:10px 0 0;padding:8px 12px;border-radius:12px;background:var(--green-soft);
+    color:#2F6B4F;font-size:12.5px;font-weight:800;
+  }
+
+  .today-grid{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+  .today-grid > *{min-width:0}
+  @media(min-width:900px){
+    .today-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}
+  }
+
+  /* char cards */
+  .chars{display:flex;flex-direction:column;gap:10px}
+  .ccard{
+    background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);
+    padding:14px 15px;position:relative;overflow:hidden;
+  }
+  .ccard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(180deg,#FFD6C0,#F4A179)}
+  .c-main{display:flex;gap:13px;align-items:flex-start}
+  .glyph{
+    flex:0 0 auto;width:92px;height:92px;border:1px solid var(--line);border-radius:16px;
+    background:linear-gradient(180deg,#FFFDF8,#FFF6EC);cursor:pointer;color:var(--ink);
+    font-size:60px;line-height:1;display:grid;place-items:center;padding:0;position:relative;
+    font-family:"Nanum Myeongjo","Noto Serif KR","Batang",serif;font-weight:700;
+  }
+  .glyph::after{content:"🔊";position:absolute;right:5px;bottom:4px;font-size:11px;opacity:.5;font-family:inherit}
+  .glyph:active{transform:scale(.96)}
+  .c-info{min-width:0;flex:1}
+  .c-read{display:flex;align-items:baseline;gap:6px;margin:0;flex-wrap:wrap}
+  .c-read .hun{font-size:15px;font-weight:800;color:var(--accent-deep)}
+  .c-read b{font-size:24px;letter-spacing:-.5px}
+  .csay{
+    margin-left:auto;border:1px solid var(--line);background:#fff;color:var(--accent-deep);
+    font-family:inherit;font-size:11px;font-weight:800;padding:5px 9px;border-radius:999px;cursor:pointer;
+    white-space:nowrap;align-self:center;
+  }
+  .csay:active{background:var(--accent-soft)}
+  .c-meta{margin:2px 0 0;font-size:11.5px;font-weight:800;color:var(--muted)}
+  .c-hint{margin:7px 0 0;font-size:12.5px;color:var(--ink-soft);font-weight:600;line-height:1.5;word-break:keep-all}
+  .c-words{display:flex;flex-direction:column;gap:6px;margin-top:11px}
+  .word{
+    display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;width:100%;text-align:left;
+    border:1px solid transparent;background:#FFFBF6;border-radius:11px;padding:7px 9px;
+    font-family:inherit;color:var(--ink);cursor:pointer;
+  }
+  .word:active{background:#FFF3E7;border-color:var(--line-2)}
+  .word .wh{font-size:16px;font-weight:800;letter-spacing:.2px}
+  .word .wr{font-size:13px;font-weight:900;color:var(--accent-deep)}
+  .word .wm{flex:1 1 100%;font-size:11.5px;color:var(--ink-soft);font-weight:600;line-height:1.45}
+  .tag{font-size:10px;font-weight:900;padding:2px 6px;border-radius:6px;white-space:nowrap;letter-spacing:-.2px}
+  .tag-사회{background:var(--blue-soft);color:var(--blue)}
+  .tag-과학{background:var(--green-soft);color:var(--green)}
+
+  /* trace */
+  .trace .chead{flex-wrap:wrap}
+  .tchips{display:flex;gap:5px;flex-wrap:wrap}
+  .tchips button{
+    min-width:42px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);
+    font-family:inherit;font-size:19px;font-weight:700;padding:3px 8px;border-radius:10px;cursor:pointer;
+  }
+  .tchips button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+  .canvas-wrap{display:flex;justify-content:center;margin-top:2px}
+  #traceCanvas{
+    display:block;border-radius:14px;background:#FFFDF8;box-shadow:inset 0 0 0 1px var(--line);
+    touch-action:none;cursor:crosshair;width:100%;max-width:min(360px,100%);
+  }
+  .canvas-tip{margin:7px 0 0;text-align:center;font-size:11.5px;color:var(--muted);font-weight:700}
+  .tools{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+  .tools button{
+    flex:1 1 auto;min-height:42px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);
+    font-family:inherit;font-size:12.5px;font-weight:800;padding:8px 9px;border-radius:11px;cursor:pointer;
+  }
+  .tools button:active{background:#FFF6EC}
+  .tools button[aria-pressed="true"]{background:var(--accent-soft);border-color:#F3B79B;color:var(--accent-deep)}
+  .tools button.narrow{flex:0 0 46px;font-size:15px}
+
+  /* quiz */
+  .qbar{height:6px;border-radius:99px;background:#F3E6D9;overflow:hidden;margin-bottom:10px}
+  .qbar i{display:block;height:100%;background:linear-gradient(90deg,#FFC7AC,var(--accent));border-radius:99px;transition:width .3s}
+  .qtype{margin:0 0 3px;font-size:11px;font-weight:900;color:var(--muted)}
+  .qtext{margin:0;font-size:14.5px;font-weight:800;line-height:1.5;word-break:keep-all}
+  .qbig{
+    font-size:62px;line-height:1.1;text-align:center;margin:8px 0 10px;color:var(--ink);
+    font-family:"Nanum Myeongjo","Noto Serif KR","Batang",serif;
+  }
+  .qbig.word{font-size:40px;letter-spacing:0}
+  .qsub{margin:4px 0 12px;text-align:center;font-size:16px;font-weight:900;color:var(--accent-deep)}
+  .opts{display:grid;gap:7px}
+  .opts button{
+    width:100%;text-align:left;border:1px solid var(--line);background:#fff;color:var(--ink);
+    font-family:inherit;font-size:14px;font-weight:700;line-height:1.4;padding:11px 13px;border-radius:12px;cursor:pointer;
+  }
+  .opts button:active{background:#FFF6EC}
+  .opts button.ok{background:var(--green-soft);border-color:#9FD3B6;color:#27654A;font-weight:900}
+  .opts button.bad{background:var(--red-soft);border-color:#EAB0AA;color:#96352E}
+  .opts button:disabled{cursor:default;opacity:.92}
+  .qmsg{margin:10px 0 0;font-size:12.5px;font-weight:800;color:var(--ink-soft);line-height:1.5}
+  .qmsg.ok{color:var(--green)}
+  .qmsg.bad{color:var(--red)}
+  .qnext{
+    margin-top:10px;width:100%;border:0;background:var(--ink);color:#fff;font-family:inherit;
+    font-size:13.5px;font-weight:900;padding:12px;border-radius:12px;cursor:pointer;
+  }
+  .qdone{text-align:center;padding:6px 0 2px}
+  .qscore{font-size:30px;font-weight:900;letter-spacing:-1px;color:var(--ink)}
+  .qscore small{font-size:14px;color:var(--muted);margin-left:4px}
+  .qdone p{margin:6px 0 12px;font-size:13px;color:var(--ink-soft);font-weight:700}
+  .qdone button{
+    border:1px solid var(--line);background:#fff;color:var(--ink-soft);font-family:inherit;
+    font-size:12.5px;font-weight:800;padding:9px 14px;border-radius:11px;cursor:pointer;
+  }
+
+  /* step A */
+  .blanks{display:flex;flex-direction:column;gap:10px}
+  .blank{border:1px solid var(--line);border-radius:14px;padding:11px 12px;background:#FFFDFA}
+  .bq{margin:0 0 8px;font-size:13.5px;font-weight:700;line-height:1.55;word-break:keep-all}
+  .bq .tag{vertical-align:middle;margin-right:3px}
+  .brow{display:flex;gap:6px}
+  .brow input{
+    flex:1;min-width:0;border:1.5px solid var(--line-2);background:#fff;border-radius:11px;
+    font-family:inherit;font-size:15px;font-weight:800;color:var(--ink);padding:10px 12px;
+  }
+  .brow input:focus{outline:none;border-color:#F0B79C;background:#FFFDF9}
+  .brow input:disabled{background:#F8F4EE;color:var(--ink-soft)}
+  .brow button{
+    flex:0 0 auto;border:0;background:var(--ink);color:#fff;font-family:inherit;
+    font-size:13px;font-weight:900;padding:0 16px;border-radius:11px;cursor:pointer;
+  }
+  .blank.ok{border-color:#B5DCC4;background:var(--green-soft)}
+  .blank.no{border-color:#EAB0AA;background:var(--red-soft)}
+  .bmsg{margin:8px 0 0;font-size:12px;font-weight:800;line-height:1.55;color:var(--ink-soft)}
+  .blank.ok .bmsg{color:#2F6B4F}
+  .blank.no .bmsg{color:#96352E}
+
+  /* step B */
+  .chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:9px}
+  .chiplabel{font-size:11.5px;font-weight:900;color:var(--muted)}
+  .chips button{
+    border:1px solid var(--line-2);background:#FFFBF6;color:var(--ink);
+    font-family:inherit;font-size:13px;font-weight:800;padding:7px 11px;border-radius:999px;cursor:pointer;
+  }
+  .chips button:active{background:var(--accent-soft)}
+  .chips button .tt{font-size:10px;color:var(--green);font-weight:900;margin-left:3px}
+  .chips button.tagged{background:var(--green-soft);border-color:#B7DEC5}
+  .chips button.tagged.soc{background:var(--blue-soft);border-color:#BBD5EC;color:var(--blue)}
+  #freeText{
+    width:100%;max-width:100%;min-height:104px;resize:vertical;border:1.5px solid var(--line-2);border-radius:14px;
+    background:#FFFDFA;color:var(--ink);font-family:inherit;font-size:15px;line-height:1.6;padding:12px 13px;
+  }
+  #freeText:focus{outline:none;border-color:#F0B79C;background:#fff}
+  .freefoot{display:flex;align-items:center;gap:8px;margin-top:8px}
+  .freefoot span{font-size:11.5px;font-weight:800;color:var(--muted)}
+  .freefoot button{
+    margin-left:auto;border:0;background:var(--ink);color:#fff;font-family:inherit;
+    font-size:13.5px;font-weight:900;padding:11px 18px;border-radius:12px;cursor:pointer;
+  }
+  .feedback{margin-top:11px;border-radius:14px;padding:12px 13px;background:#FFF8EE;border:1px solid #F3E2CF}
+  .feedback.good{background:var(--green-soft);border-color:#B7DEC5}
+  .fb-head{font-size:14px;font-weight:900;color:var(--ink);margin:0 0 4px}
+  .fb-text{margin:0;font-size:12.5px;font-weight:700;color:var(--ink-soft);line-height:1.6}
+  .fb-models{margin-top:10px;padding-top:10px;border-top:1px dashed #E7D3C0}
+  .fb-title{margin:0 0 5px;font-size:11.5px;font-weight:900;color:var(--muted)}
+  .fb-models ul{margin:0;padding-left:16px}
+  .fb-models li{font-size:12.5px;color:var(--ink-soft);font-weight:600;margin:3px 0;line-height:1.5}
+  .fb-models li b{color:var(--accent-deep)}
+
+  /* finish */
+  .checklist{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column;gap:7px}
+  .checklist li{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:var(--ink-soft)}
+  .checklist li .ck{width:20px;height:20px;border-radius:50%;background:#F4EDE5;display:grid;place-items:center;font-size:11px;color:#B9A997;flex:0 0 auto}
+  .checklist li.ok{color:#2F6B4F}
+  .checklist li.ok .ck{background:#8DC8AC;color:#fff}
+  .checklist li span.small{margin-left:auto;font-size:11px;font-weight:800;color:var(--muted)}
+  .stampbtn{
+    width:100%;border:0;background:linear-gradient(180deg,#F6A07A,#EE8259);color:#fff;font-family:inherit;
+    font-size:15px;font-weight:900;padding:14px;border-radius:14px;cursor:pointer;
+    box-shadow:0 6px 16px rgba(239,138,98,.28);
+  }
+  .stampbtn:disabled{background:#E9DFD5;color:#A2958A;box-shadow:none;cursor:default}
+  .finish .note{margin:9px 0 0;text-align:center;font-size:11.5px;color:var(--muted);font-weight:700}
+  .alreadydone{text-align:center;padding:4px 0 2px}
+  .alreadydone .bigstamp{
+    width:88px;height:88px;margin:2px auto 8px;border:3px double #C96D62;border-radius:50%;
+    display:grid;place-items:center;color:#C96D62;font-size:14px;font-weight:900;line-height:1.2;
+    transform:rotate(-7deg);background:#FFF9F7;
+  }
+  .alreadydone p{margin:0;font-size:12.5px;font-weight:800;color:var(--ink-soft);line-height:1.6}
+
+  /* calendar */
+  .calhead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+  .calhead h2{margin:0;font-size:18px;font-weight:900;letter-spacing:-.4px}
+  .calhead button{
+    width:38px;height:38px;border:1px solid var(--line);background:#fff;border-radius:11px;
+    font-family:inherit;font-size:17px;color:var(--ink-soft);cursor:pointer;
+  }
+  .calstat{font-size:12.5px;font-weight:800;color:var(--ink-soft);margin-bottom:10px}
+  .calstat b{color:var(--accent-deep)}
+  .calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+  .calgrid .dow{text-align:center;font-size:11px;font-weight:900;color:var(--muted);padding:2px 0}
+  .calgrid .dow.sun{color:#C2603F}
+  .calgrid .cell{
+    aspect-ratio:1/1;border:1px solid var(--line);border-radius:10px;background:#FFFDFA;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+    font-size:12px;font-weight:800;color:var(--ink-soft);position:relative;min-width:0;
+  }
+  .calgrid .cell.empty{border:0;background:transparent}
+  .calgrid .cell.today{box-shadow:inset 0 0 0 2px #F3B79B;border-color:#F3B79B}
+  .calgrid .cell.done{background:linear-gradient(180deg,#FFF6E9,#FFEEDA);border-color:#F0C9A4}
+  .calgrid .cell .star{font-size:14px;line-height:1}
+  .calgrid .cell .many{font-size:9px;font-weight:900;color:#A96A15}
+  .callegend{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:11px;font-weight:700;color:var(--muted)}
+  .callegend i{font-style:normal}
+  .caldays{margin-top:12px}
+  .caldays h2{margin:0 0 9px;font-size:14px;font-weight:900}
+  .caldays .dayrow{
+    display:flex;align-items:center;gap:9px;padding:8px 0;border-top:1px dashed var(--line);
+    font-size:12.5px;font-weight:700;color:var(--ink-soft);
+  }
+  .caldays .dayrow:first-of-type{border-top:0}
+  .caldays .dn{font-size:12px;font-weight:900;color:var(--accent-deep);background:var(--accent-soft);border-radius:6px;padding:2px 6px;white-space:nowrap}
+  .caldays .dd{margin-left:auto;font-size:11px;color:var(--muted);font-weight:800;white-space:nowrap}
+  .emptybox{padding:26px 12px;text-align:center;color:var(--muted);font-size:13px;font-weight:700;line-height:1.7}
+
+  /* sentences */
+  .sent{border:1px solid var(--line);border-radius:16px;padding:12px 14px;background:#FFFDFA;margin-bottom:9px}
+  .sent-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .sent-top .sday{font-size:11px;font-weight:900;color:var(--accent-deep);background:var(--accent-soft);padding:2px 7px;border-radius:6px}
+  .sent-top .sdate{font-size:11px;font-weight:800;color:var(--muted)}
+  .sent-top button{margin-left:auto;border:0;background:transparent;color:var(--muted);font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;padding:4px}
+  .stext{margin:8px 0 0;font-size:14.5px;font-weight:700;line-height:1.65;word-break:keep-all}
+  .stargets{margin:7px 0 0;font-size:11.5px;font-weight:700;color:var(--muted)}
+  .stargets .tag{margin-right:3px}
+
+  /* vocab */
+  .vhead{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+  .vhead h2{margin:0;font-size:15px;font-weight:900}
+  .vhead .cnt{margin-left:auto;font-size:11.5px;font-weight:800;color:var(--muted)}
+  .vfilter{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:9px}
+  .vfilter button{
+    border:1px solid var(--line);background:#fff;color:var(--ink-soft);font-family:inherit;
+    font-size:12px;font-weight:800;padding:6px 11px;border-radius:999px;cursor:pointer;
+  }
+  .vfilter button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+  .vsearch{width:100%;border:1.5px solid var(--line-2);border-radius:12px;background:#fff;padding:10px 12px;
+    font-family:inherit;font-size:13.5px;font-weight:700;color:var(--ink);margin-bottom:10px}
+  .vsearch:focus{outline:none;border-color:#F0B79C}
+  .vlist{display:flex;flex-direction:column;gap:0}
+  .vrow{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-top:1px dashed var(--line)}
+  .vrow:first-child{border-top:0;padding-top:2px}
+  .vchar{
+    flex:0 0 40px;width:40px;height:40px;border-radius:10px;background:#FFF6EC;border:1px solid var(--line);
+    display:grid;place-items:center;font-size:23px;color:var(--ink);
+    font-family:"Nanum Myeongjo","Noto Serif KR","Batang",serif;
+  }
+  .vbody{min-width:0;flex:1}
+  .vword{margin:0;font-size:15px;font-weight:900;line-height:1.4;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .vword .vr{font-size:12.5px;color:var(--accent-deep);font-weight:900}
+  .vmean{margin:2px 0 0;font-size:12px;font-weight:600;color:var(--ink-soft);line-height:1.5;word-break:keep-all}
+  .vday{margin:3px 0 0;font-size:10.5px;font-weight:800;color:var(--muted)}
+  .vsay{flex:0 0 auto;border:1px solid var(--line);background:#fff;border-radius:9px;font-size:13px;padding:6px 8px;cursor:pointer;color:var(--ink-soft)}
+
+  /* modal */
+  .modal{
+    position:fixed;inset:0;z-index:100;background:rgba(55,38,28,.35);backdrop-filter:blur(3px);
+    display:flex;align-items:center;justify-content:center;padding:20px;
+  }
+  .modal-card{
+    width:min(360px,100%);background:#FFFDF9;border-radius:24px;padding:26px 22px 20px;text-align:center;
+    box-shadow:0 22px 60px rgba(70,45,30,.25);animation:pop .32s cubic-bezier(.2,1.4,.5,1);
+  }
+  @keyframes pop{from{transform:scale(.86);opacity:0}to{transform:scale(1);opacity:1}}
+  .stamp{
+    width:112px;height:112px;margin:0 auto 12px;border:4px double #C96D62;border-radius:50%;
+    display:grid;place-items:center;color:#C96D62;font-size:19px;font-weight:900;line-height:1.15;
+    transform:rotate(-8deg);background:#FFF9F7;letter-spacing:2px;
+    animation:stamp .45s cubic-bezier(.2,1.6,.5,1);
+  }
+  @keyframes stamp{from{transform:rotate(-8deg) scale(1.7);opacity:0}to{transform:rotate(-8deg) scale(1);opacity:1}}
+  .modal-card h2{margin:0;font-size:22px;font-weight:900;letter-spacing:-.5px}
+  .modal-stars{margin:5px 0 5px;font-size:22px;letter-spacing:2px}
+  .modal-msg{margin:0 0 16px;font-size:13px;font-weight:700;color:var(--ink-soft);line-height:1.6}
+  .modal-card button{
+    width:100%;border:0;background:var(--ink);color:#fff;font-family:inherit;font-size:14px;
+    font-weight:900;padding:13px;border-radius:13px;cursor:pointer;
+  }
+
+  /* toast */
+  .toast{
+    position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);
+    z-index:120;max-width:88vw;background:rgba(51,43,37,.94);color:#fff;font-size:13px;font-weight:800;
+    padding:11px 16px;border-radius:12px;box-shadow:0 10px 26px rgba(0,0,0,.22);text-align:center;
+  }
+
+  @media(max-width:640px){
+    .app{padding:0 12px}
+    .top{flex-wrap:wrap;gap:7px}
+    .brand{flex:1 1 auto}
+    .mark{width:38px;height:38px;border-radius:12px;font-size:19px}
+    .brand h1{font-size:17px}
+    .brand p{font-size:11px}
+    .back{order:0;font-size:11.5px;padding:7px 10px}
+    .who{order:0;margin-left:0;flex:0 0 auto}
+    .who button{font-size:12px;padding:7px 9px}
+    .stats{gap:6px}
+    .stat{padding:6px 9px;font-size:10.5px}
+    .stat b{font-size:14px}
+    .tab{font-size:11.5px;padding:9px 1px;letter-spacing:-.6px}
+    .card{padding:13px;border-radius:17px}
+    .dh-theme{font-size:19px}
+    .glyph{width:78px;height:78px;font-size:50px}
+    .c-read b{font-size:21px}
+    .qbig{font-size:54px}
+    .opts button{font-size:13.5px;padding:10px 12px}
+    .calgrid{gap:3px}
+    .calgrid .cell{border-radius:8px;font-size:11px}
+    .calgrid .cell .star{font-size:12px}
+    .vchar{flex-basis:36px;width:36px;height:36px;font-size:20px}
+  }
+  @media(min-width:1100px){
+    .glyph{width:102px;height:102px;font-size:68px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <a class="back" href="../index.html" aria-label="서연·서우 보드로 돌아가기">◀ 보드</a>
+    <div class="brand">
+      <span class="mark hanja" aria-hidden="true">漢</span>
+      <div>
+        <h1>매일 한자</h1>
+        <p id="dayline">불러오는 중…</p>
+      </div>
+    </div>
+    <div class="who" id="who" role="group" aria-label="공부하는 사람">
+      <button type="button" data-act="profile" data-p="seoyeon"><span class="dot"></span>서연</button>
+      <button type="button" data-act="profile" data-p="seowoo"><span class="dot"></span>서우</button>
+    </div>
+  </header>
+
+  <div class="stats" aria-label="학습 기록">
+    <div class="stat"><span class="si" aria-hidden="true">🔥</span><b id="statStreak">0</b><span>연속</span></div>
+    <div class="stat"><span class="si" aria-hidden="true">⭐</span><b id="statStars">0</b><span>별</span></div>
+    <div class="stat"><span class="si" aria-hidden="true">📅</span><b id="statDays">0</b><span>일 마침</span></div>
+  </div>
+
+  <nav class="tabs" aria-label="매일 한자 보기">
+    <button type="button" class="tab active" data-view="today">오늘 학습</button>
+    <button type="button" class="tab" data-view="calendar">출석 달력</button>
+    <button type="button" class="tab" data-view="sentences">내 문장</button>
+    <button type="button" class="tab" data-view="vocab">교과 어휘</button>
+  </nav>
+
+  <main>
+    <section id="view-today" class="view" aria-label="오늘 학습"></section>
+
+    <section id="view-calendar" class="view" hidden aria-label="출석 달력">
+      <div class="card">
+        <div class="calhead">
+          <button type="button" data-act="cal-prev" aria-label="지난달">‹</button>
+          <h2 id="calTitle">-</h2>
+          <button type="button" data-act="cal-next" aria-label="다음달">›</button>
+        </div>
+        <p class="calstat" id="calStat"></p>
+        <div class="calgrid" id="calGrid"></div>
+        <div class="callegend"><span><i>⭐</i> 마친 날</span><span><i>🟠</i> 오늘</span><span>한 날에 여러 일차를 마치면 숫자가 보여요.</span></div>
+      </div>
+      <div class="card caldays" id="calDays" style="margin-top:12px"></div>
+    </section>
+
+    <section id="view-sentences" class="view" hidden aria-label="내 문장">
+      <div class="card">
+        <div class="chead"><h2>✏️ 내가 만든 문장</h2><span class="pill" id="sentCount">0개</span></div>
+        <div id="sentList"></div>
+      </div>
+    </section>
+
+    <section id="view-vocab" class="view" hidden aria-label="교과서 사회·과학 어휘">
+      <div class="card">
+        <div class="vhead"><h2>📚 교과서 사회·과학 어휘</h2><span class="cnt" id="vocabCount"></span></div>
+        <p class="lead">오늘 배운 한자로 이루어진 사회·과학 낱말을 모았어요. 낱말을 누르면 소리로 들려줘요.</p>
+        <div class="vfilter" id="vocabFilter"></div>
+        <input type="search" class="vsearch" id="vocabSearch" placeholder="낱말이나 뜻으로 찾아보기 (예: 화산, 인구)" aria-label="어휘 찾기" autocomplete="off">
+        <div class="vlist" id="vocabList"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="modal" id="stampModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="stampTitle">
+    <div class="stamp" aria-hidden="true">참<br>잘했어요</div>
+    <h2 id="stampTitle">오늘 학습 완료!</h2>
+    <p class="modal-stars" id="stampStars">⭐ ⭐ ⭐</p>
+    <p class="modal-msg" id="stampMsg"></p>
+    <button type="button" data-act="close-modal">좋아요</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<noscript><p style="padding:20px;text-align:center">이 학습 앱은 자바스크립트가 필요해요. 브라우저 설정에서 자바스크립트를 켜 주세요.</p></noscript>
+
+<script src="./data-a.js"></script>
+<script src="./data-b.js"></script>
+<script src="./data-c.js"></script>
+<script src="./app.js"></script>
+</body>
+</html>

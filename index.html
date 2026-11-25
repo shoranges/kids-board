@@ -80,6 +80,11 @@
     white-space:nowrap;
   }
   .tab.active{background:#fff;color:var(--ink);box-shadow:0 1px 6px rgba(170,120,85,.14)}
+  a.tab{display:flex;align-items:center;justify-content:center;text-decoration:none}
+  a.tab.hanja-tab{
+    color:#A9572F;background:linear-gradient(180deg,#FFF8F0,#FFEBDD);
+    border:1px solid #F5D2BC;box-shadow:0 1px 4px rgba(239,138,98,.12);
+  }
   .edit-bar{
     margin:-6px 0 12px;padding:9px 13px;border-radius:12px;
     background:var(--accent-soft);color:#8E4A2E;font-size:12.5px;font-weight:600;
@@ -456,6 +461,20 @@
   .stars i.on{color:#F0B93C}
   .star-total{margin-left:auto;font-size:11.5px;font-weight:800;color:var(--muted);background:#F7F2EC;padding:3px 8px;border-radius:999px}
 
+  /* 매일 한자 바로가기 */
+  .hanja-link{
+    display:flex;align-items:center;gap:11px;text-decoration:none;margin-top:12px;
+    background:linear-gradient(100deg,#FFF7EE,#FFE9D8 70%,#FFE3D0);
+    border:1px solid #F5CFB4;border-radius:16px;padding:11px 14px;box-shadow:var(--shadow);
+  }
+  .hanja-link .ic{font-size:24px;line-height:1;color:#A9572F;
+    width:34px;height:34px;border-radius:10px;background:#FFF3E6;border:1px solid #F3D2B8;
+    display:grid;place-items:center;font-family:"Nanum Myeongjo","Noto Serif KR","Batang",serif;}
+  .hanja-link .tx{min-width:0;display:flex;flex-direction:column;line-height:1.3}
+  .hanja-link .tx b{font-size:14px;font-weight:900;color:#8E4A2E;letter-spacing:-.3px}
+  .hanja-link .tx span{font-size:11px;font-weight:700;color:#A9714F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hanja-link .go{margin-left:auto;font-size:15px;font-weight:900;color:#C2603F;flex:0 0 auto}
+
   /* 가운데 위젯 */
   .hb-grid{display:grid;gap:12px;grid-template-columns:repeat(4,minmax(0,1fr))}
   .hb-grid .quiz{grid-column:span 2}
@@ -584,6 +603,7 @@
     <button class="tab" data-view="meal" role="tab" title="함박초 급식">급식</button>
     <button class="tab" data-view="homework" role="tab" title="숙제·준비물">숙제</button>
     <button class="tab" data-view="edit" role="tab">편집</button>
+    <a class="tab hanja-tab" href="./hanja/" title="매일 한자 학습"><span class="hanja">漢</span>&nbsp;한자</a>
   </nav>
 
   <div class="edit-bar" id="editBar" hidden>편집 중 · 회색 ✎ 항목을 누르면 고칠 수 있고, <b>＋</b>로 추가할 수 있어요</div>
@@ -616,6 +636,12 @@
           <div class="daybar" id="homeDayBar"></div>
           <p class="hb-daynote" id="homeDayNote"></p>
         </div>
+
+        <a class="hanja-link" href="./hanja/">
+          <span class="ic hanja" aria-hidden="true">漢</span>
+          <span class="tx"><b>매일 한자</b><span>오늘의 한자 3자 · 따라쓰기 · 문장 만들기 · 교과서 어휘</span></span>
+          <span class="go" aria-hidden="true">→</span>
+        </a>
 
         <div class="hb-kids" id="studyCards"></div>
 

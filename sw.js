@@ -1,6 +1,11 @@
 /* 서연·서우 보드 — 오프라인에서도 열리도록 화면을 저장해 둡니다 */
-var CACHE = 'kids-board-v3';
-var ASSETS = ['./', './index.html', './meals.json', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
+var CACHE = 'kids-board-v4';
+var ASSETS = [
+  './', './index.html', './meals.json', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png',
+  './hanja/', './hanja/index.html', './hanja/manifest.json',
+  './hanja/data-a.js', './hanja/data-b.js', './hanja/data-c.js', './hanja/app.js',
+  './hanja/icon-192.png', './hanja/icon-512.png', './hanja/apple-touch-icon.png'
+];
 
 self.addEventListener('install', function (e) {
   e.waitUntil(
@@ -33,7 +38,10 @@ self.addEventListener('fetch', function (e) {
       return res;
     }).catch(function () {
       return caches.match(e.request).then(function (r) {
-        return r || caches.match('./index.html');
+        if (r) return r;
+        // 한자 앱 화면을 새로 열 때(주소 끝이 /hanja/)도 오프라인에서 열리도록.
+        if (url.pathname.indexOf('/hanja/') >= 0) return caches.match('./hanja/index.html');
+        return caches.match('./index.html');
       });
     })
   );
