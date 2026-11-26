@@ -1,5 +1,5 @@
 /* 서연·서우 보드 — 오프라인에서도 열리도록 화면을 저장해 둡니다 */
-var CACHE = 'kids-board-v8';
+var CACHE = 'kids-board-v9';
 var ASSETS = [
   './', './index.html', './meals.json', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png',
   './seoyeon.html', './seowoo.html', './manifest-seoyeon.json', './manifest-seowoo.json',
